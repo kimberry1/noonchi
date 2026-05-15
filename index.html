@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -1102,7 +1102,7 @@ body { background:var(--bg); background-image:radial-gradient(ellipse 80% 60% at
 
 <script>
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(function(r){
+  navigator.serviceWorker.register('/thinkKl/sw.js', {scope: '/thinkKl/'}).then(function(r){
     console.log('[SW] 등록 완료:', r.scope);
   }).catch(function(e){
     console.warn('[SW] 등록 실패:', e);
@@ -1111,3 +1111,4 @@ if('serviceWorker' in navigator){
 </script>
 </body>
 </html>
+

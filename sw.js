@@ -1,9 +1,12 @@
-// ThinkKl Service Worker v1.0
-const CACHE_NAME = 'thinkKl-v1';
+// ThinkKl Service Worker v1.1
+const CACHE_NAME = 'thinkKl-v2';
+const BASE = '/thinkKl';
 const OFFLINE_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  BASE + '/',
+  BASE + '/index.html',
+  BASE + '/manifest.json',
+  BASE + '/icon-192.png',
+  BASE + '/icon-512.png'
 ];
 
 // 설치: 핵심 파일 캐시
@@ -11,6 +14,8 @@ self.addEventListener('install', function(event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
       return cache.addAll(OFFLINE_ASSETS);
+    }).catch(function(e){
+      console.warn('[SW] 캐시 실패:', e);
     })
   );
   self.skipWaiting();
@@ -31,14 +36,18 @@ self.addEventListener('activate', function(event) {
 
 // 요청 처리: Network First (온라인 우선, 실패 시 캐시)
 self.addEventListener('fetch', function(event) {
-  // Supabase API 요청은 캐시 안 함 (항상 네트워크)
-  if (event.request.url.includes('supabase.co')) {
+  var url = event.request.url;
+
+  // Supabase API / 외부 요청은 캐시 안 함
+  if (url.includes('supabase.co') ||
+      url.includes('googleapis.com') ||
+      url.includes('kakao.com')) {
     return;
   }
+
   event.respondWith(
     fetch(event.request)
       .then(function(response) {
-        // 성공 응답은 캐시에 저장
         if (response && response.status === 200 && response.type === 'basic') {
           var clone = response.clone();
           caches.open(CACHE_NAME).then(function(cache) {
@@ -48,9 +57,8 @@ self.addEventListener('fetch', function(event) {
         return response;
       })
       .catch(function() {
-        // 네트워크 실패 시 캐시에서 응답
         return caches.match(event.request).then(function(cached) {
-          return cached || caches.match('/index.html');
+          return cached || caches.match(BASE + '/index.html');
         });
       })
   );
