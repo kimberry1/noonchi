@@ -6,7 +6,8 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%236B2418'/><circle cx='34' cy='50' r='15' fill='%23FFF9F4'/><circle cx='66' cy='50' r='15' fill='%23FFF9F4'/><circle cx='38' cy='50' r='5.5' fill='%232B1A12'/><circle cx='62' cy='50' r='5.5' fill='%232B1A12'/></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#6B2418">
-<meta name="description" content="눈치껏 힌트 읽고 단어 맞히는 게임, Noonchi. 힌트를 보고 단어를 맞추는 단어 연상 게임. 매일 1% 도전 문제와 파티 모드로 친구들과 함께 즐겨보세요.">
+<meta name="description" content="Noonchi는 힌트를 보고 단어를 맞히는 한국어 단어 연상 게임입니다. 로그인 없이 바로 플레이하거나, 계정을 만들어 랭킹과 파티 대결을 즐겨보세요.">
+<meta name="application-name" content="Noonchi">
 <meta property="og:title" content="Noonchi · 힌트 읽고 단어 맞히기">
 <meta property="og:description" content="눈치껏 힌트 읽고 단어 맞히기. 매일의 1% 도전과 친구와의 파티 대결.">
 <meta property="og:type" content="website">
@@ -5196,9 +5197,12 @@ function maybeShowOnboarding(){
   }
 }
 </script>
-<footer style="display:none">
-  <a href="privacy.html">개인정보처리방침</a>
-  <a href="terms.html">서비스 이용약관</a>
+<footer style="position:fixed;bottom:0;left:0;right:0;padding:6px;text-align:center;font-size:10px;color:#aaa;background:transparent;z-index:0;pointer-events:none;">
+  <span style="pointer-events:auto;">
+    <a href="privacy.html" style="color:#aaa;text-decoration:none;">개인정보처리방침</a>
+    &nbsp;·&nbsp;
+    <a href="terms.html" style="color:#aaa;text-decoration:none;">서비스 이용약관</a>
+  </span>
 </footer>
 </body>
 </html>
