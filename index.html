@@ -677,7 +677,7 @@ input,button,textarea,select { font-family:inherit; }
 <!-- 1. 로그인 -->
 <div class="screen active" id="screenLogin">
   <div class="logo">n<span class="logo-eyes" aria-hidden="true"><span class="logo-eye logo-eye-l"></span><span class="logo-eye logo-eye-r"></span></span>nchi<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">oo</span></div>
-  <div class="tagline">힌트 살피고 단어 맞히기</div>
+  <div class="tagline">힌트를 연결하고 눈치껏 단어 맞히기</div>
   <div class="w400 login-card">
     <!-- 로그인 / 회원가입 탭 -->
     <div class="auth-tabs">
@@ -775,12 +775,12 @@ input,button,textarea,select { font-family:inherit; }
 <div class="screen" id="screenOnePct">
   <div class="w400" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
     <button class="back-btn" onclick="showScreen('screenMode')">← 뒤로</button>
-    <span style="font-family:var(--font-display);font-size:0.9rem;color:var(--accent2)">🔥 오늘의 1% 문제</span>
+    <span style="font-family:var(--font-display);font-size:0.9rem;color:var(--accent2)">📅 오늘의 문제</span>
     <div style="width:60px"></div>
   </div>
   <div class="one-pct-game-header w400">
     <div class="opg-row">
-      <span class="opg-badge">오늘의 도전</span>
+      <span class="opg-badge">오늘의 문제</span>
       <div style="text-align:right">
         <div class="opg-rate" id="opLiveRate">?%</div>
         <div class="opg-rate-label">현재 정답률</div>
@@ -795,8 +795,8 @@ input,button,textarea,select { font-family:inherit; }
 
   <div class="game-card w400" id="opGameCard">
     <div class="round-row">
-      <span class="round-label">오늘의 단어</span>
-      <span class="round-diff insane">지옥</span>
+      <span class="round-label">오늘의 문제</span>
+      <span class="round-diff" id="opDiffBadge" style="display:none"></span>
     </div>
     <div class="hints-area" id="opHintsArea"></div>
     <div class="input-wrap" id="opInputWrap">
@@ -909,9 +909,9 @@ input,button,textarea,select { font-family:inherit; }
       <div style="font-size:0.8rem;color:var(--muted);line-height:1.75;margin-bottom:4px">
         · 모든 광고 완전 제거<br>
         · 파티 방장이면 참가자도 광고 없음<br>
-        · 월 <b style="color:var(--text)">2,900원</b>
+        · 월 <b style="color:var(--text)">1,000원</b>
       </div>
-      <button class="premium-subscribe-btn" onclick="startPortonePayment()">구독하기 · 월 2,900원</button>
+      <button class="premium-subscribe-btn" onclick="startPortonePayment()">구독하기 · 월 1,000원</button>
     </div>
     <!-- 구독 중 상태 -->
     <div id="premiumActiveArea" style="display:none">
@@ -982,11 +982,11 @@ input,button,textarea,select { font-family:inherit; }
   <!-- 1% 문제 카드 -->
   <div class="one-pct-card" onclick="goOnePct()">
     <div class="one-pct-header">
-      <span class="one-pct-badge">🔥 오늘의 1% 문제</span>
+      <span class="one-pct-badge">📅 오늘의 문제</span>
       <span class="one-pct-refresh" id="onePctRefresh">매일 00:00 갱신</span>
     </div>
     <div class="one-pct-title">오늘 이 단어 맞힐 수 있어?</div>
-    <div class="one-pct-sub">전국 도전자 중 단 1%만 맞추는 극한의 문제</div>
+    <div class="one-pct-sub">매일 새로운 단어, 전국 유저와 함께 도전해요</div>
     <div class="one-pct-stats">
       <div class="one-pct-stat">
         <div class="ops-num red" id="onePctRate">?%</div>
@@ -1132,6 +1132,8 @@ input,button,textarea,select { font-family:inherit; }
   <div class="w400 game-nav">
     <button class="game-back" onclick="gameGoBack()">← 나가기</button>
     <div class="pills">
+      <button id="inlineSubBtn" onclick="goToPremiumFromGame()" style="display:none;font-size:0.65rem;color:#fff;background:var(--primary);border:none;border-radius:20px;padding:4px 11px;font-family:inherit;font-weight:700;cursor:pointer;letter-spacing:0;white-space:nowrap">✨ 구독하기</button>
+      <span id="inlineProBadge" style="display:none;font-size:0.6rem;color:var(--gold);background:var(--gold-bg);border:1px solid #F0DCB2;border-radius:20px;padding:3px 10px;font-weight:700;white-space:nowrap">✨ PRO</span>
       <span class="mode-pill" id="modePill">🎮 연습</span>
       <button id="saveWrongNoteBtn" onclick="saveCurrentWordToWrongNote()" style="font-size:0.7rem;padding:5px 10px;border-radius:20px;border:none;background:var(--primary-soft);color:var(--primary);cursor:pointer;font-family:inherit;font-weight:600;transition:all 0.15s;white-space:nowrap">📝 다시풀기</button>
       <span class="diff-pill" id="diffPill">쉬움</span>
@@ -1152,7 +1154,6 @@ input,button,textarea,select { font-family:inherit; }
       <span class="round-label" id="roundLabel">1라운드</span>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="round-diff easy" id="roundDiff" style="display:none">쉬움</span>
-        <div id="inlineAdSlot" style="font-size:0.6rem;color:var(--muted);background:var(--surface);border:1px dashed var(--border);border-radius:6px;padding:3px 10px;letter-spacing:0;cursor:default;white-space:nowrap">📢 광고</div>
         <button onclick="openReportInGame()" aria-label="힌트 신고" style="background:none;border:none;color:var(--muted);font-size:0.7rem;cursor:pointer;padding:2px 6px;border-radius:6px;border:1px solid var(--border)" title="힌트 신고">🚨</button>
       </div>
     </div>
@@ -1393,7 +1394,8 @@ input,button,textarea,select { font-family:inherit; }
 var DEBUG_MODE = false; // 배포 시 false 유지
 var _log = console.log, _warn = console.warn;
 console.log  = function(){ if(DEBUG_MODE) _log.apply(console, arguments); };
-console.warn = function(){ if(DEBUG_MODE) _warn.apply(console, arguments); };
+// console.warn은 유지 (Supabase 오류 진단용)
+var _sbLastError = '';
 
 // ══════════════════════════════════════════
 // SUPABASE 연동
@@ -1416,6 +1418,7 @@ const sbFetch = async (path, opts={}) => {
   });
   if(!res.ok){
     const errText = await res.text();
+    _sbLastError = res.status + ' ' + errText;
     console.warn('SB Error:', res.status, errText);
     return null;
   }
@@ -1540,6 +1543,22 @@ function updatePremiumUI(){
       nameEl.appendChild(b);
     }
   }
+  // 게임 화면 인라인 구독 슬롯 업데이트
+  var subBtn = document.getElementById('inlineSubBtn');
+  var proBadge = document.getElementById('inlineProBadge');
+  if(subBtn && proBadge){
+    if(isPremium){ subBtn.style.display='none'; proBadge.style.display=''; }
+    else if(!isGuest){ subBtn.style.display=''; proBadge.style.display='none'; }
+    else { subBtn.style.display='none'; proBadge.style.display='none'; }
+  }
+}
+
+function goToPremiumFromGame(){
+  showScreen('screenProfile');
+  setTimeout(function(){
+    var card=document.getElementById('premiumCard');
+    if(card) card.scrollIntoView({behavior:'smooth',block:'center'});
+  }, 200);
 }
 
 // ── PortOne 결제 ──
@@ -1554,7 +1573,7 @@ function startPortonePayment(){
     pay_method: 'card',
     merchant_uid: orderId,
     name: 'noonchi 프리미엄 (1개월)',
-    amount: 2900,
+    amount: 1000,
     buyer_email: currentEmail,
     buyer_name: currentUser,
   }, function(rsp){
@@ -1591,10 +1610,10 @@ function switchAuthTab(tab){
 async function sbGetOrCreateUser(username, email){
   // email로 우선 조회 (신규 방식)
   if(email){
-    const byEmail = await sbFetch('users?email=eq.'+encodeURIComponent(email)+'&select=id,username,email,is_premium,premium_until&limit=1');
+    const byEmail = await sbFetch('users?email=eq.'+encodeURIComponent(email)+'&select=id,username,email,is_premium,premium_until,xp&limit=1');
     if(byEmail && byEmail.length > 0) return byEmail[0];
     // email 없으면 username으로 fallback 후 email 추가
-    const byName = await sbFetch('users?username=eq.'+encodeURIComponent(username)+'&select=id,username,email&limit=1');
+    const byName = await sbFetch('users?username=eq.'+encodeURIComponent(username)+'&select=id,username,email,xp&limit=1');
     if(byName && byName.length > 0){
       await sbFetch('users?id=eq.'+byName[0].id, { method:'PATCH', body:{ email } });
       return byName[0];
@@ -1603,8 +1622,8 @@ async function sbGetOrCreateUser(username, email){
     const created = await sbFetch('users', { method:'POST', body:{ username, email, is_premium: false } });
     return created && created[0] ? created[0] : null;
   }
-  // 레거시: username만으로 조회
-  const found = await sbFetch('users?username=eq.'+encodeURIComponent(username)+'&select=id,username&limit=1');
+  // 레거시: username만으로 조회 (소셜 로그인)
+  const found = await sbFetch('users?username=eq.'+encodeURIComponent(username)+'&select=id,username,xp&limit=1');
   if(found && found.length > 0) return found[0];
   const created = await sbFetch('users', { method:'POST', body:{ username } });
   return created && created[0] ? created[0] : null;
@@ -1826,7 +1845,7 @@ var DAILY_MISSION_POOL = [
   {id:'d_play10',  icon:'🎯', name:'오늘 10판 플레이',     xp:20,  check:function(s,d){return (d.dailyGames||0)>=10;}},
   {id:'d_rank2',   icon:'🏆', name:'랭크모드 2개 정답',    xp:25,  check:function(s,d){return (d.dailyRank||0)>=2;}},
   {id:'d_noSkip5', icon:'🧠', name:'스킵 없이 5판',        xp:20,  check:function(s,d){return (d.noSkipStreak||0)>=5;}},
-  {id:'d_onePct',  icon:'🔥', name:'오늘의 1% 문제 도전', xp:10,  check:function(s,d){return !!(d.triedOnePct);}},
+  {id:'d_onePct',  icon:'📅', name:'오늘의 문제 도전',    xp:10,  check:function(s,d){return !!(d.triedOnePct);}},
 ];
 
 function getTodayMissions(){
@@ -2022,18 +2041,28 @@ function getLevelInfo(xp){
 }
 
 function updateXP(){
-  if(isGuest){ document.getElementById('xpLevel').textContent='Lv.— · 게스트'; document.getElementById('xpPts').textContent='로그인하면 XP 적립'; document.getElementById('xpFill').style.width='0%'; return; }
-  var xp=loadXP();
-  var info=getLevelInfo(xp);
-  var lv=info.cur, nx=info.next;
-  document.getElementById('xpLevel').textContent='Lv.'+lv.level+' · '+lv.title;
-  if(nx){
-    var prog=xp-lv.xpNeeded, needed=nx.xpNeeded-lv.xpNeeded;
-    document.getElementById('xpPts').textContent=prog+' / '+needed+' XP';
-    document.getElementById('xpFill').style.width=Math.min(100,Math.floor((prog/needed)*100))+'%';
-  } else {
-    document.getElementById('xpPts').textContent='MAX LEVEL';
-    document.getElementById('xpFill').style.width='100%';
+  if(isGuest){ document.getElementById('xpLevel').textContent='Lv.— · 게스트'; document.getElementById('xpPts').textContent='로그인하면 XP 적립'; document.getElementById('xpFill').style.width='0%'; }
+  else {
+    var xp=loadXP();
+    var info=getLevelInfo(xp);
+    var lv=info.cur, nx=info.next;
+    document.getElementById('xpLevel').textContent='Lv.'+lv.level+' · '+lv.title;
+    if(nx){
+      var prog=xp-lv.xpNeeded, needed=nx.xpNeeded-lv.xpNeeded;
+      document.getElementById('xpPts').textContent=prog+' / '+needed+' XP';
+      document.getElementById('xpFill').style.width=Math.min(100,Math.floor((prog/needed)*100))+'%';
+    } else {
+      document.getElementById('xpPts').textContent='MAX LEVEL';
+      document.getElementById('xpFill').style.width='100%';
+    }
+  }
+  // 게임 화면 인라인 슬롯도 갱신
+  var subBtn=document.getElementById('inlineSubBtn');
+  var proBadge=document.getElementById('inlineProBadge');
+  if(subBtn && proBadge){
+    if(isPremium){ subBtn.style.display='none'; proBadge.style.display=''; }
+    else if(!isGuest){ subBtn.style.display=''; proBadge.style.display='none'; }
+    else { subBtn.style.display='none'; proBadge.style.display='none'; }
   }
 }
 
@@ -2230,8 +2259,12 @@ function clearWrongNote(){
 let round=0, scoreCorrect=0, scoreStreak=0, scoreTotal=0;
 let currentWord='', currentHints=[], shownHintCount=0;
 let gameOver=false;
-let usedIndices={easy:[],normal:[],hard:[],extreme:[]};
 var SESSION_SEED = Math.floor(Math.random() * 99991) + 1; // 세션마다 다른 시작점
+function loadUsedIndices(){
+  try{ var s=localStorage.getItem('wl_used_idx'); return s?JSON.parse(s):{easy:[],normal:[],hard:[],extreme:[],insane:[]}; }catch(e){ return {easy:[],normal:[],hard:[],extreme:[],insane:[]}; }
+}
+function saveUsedIndices(){ try{ localStorage.setItem('wl_used_idx',JSON.stringify(usedIndices)); }catch(e){} }
+let usedIndices = loadUsedIndices();
 let adCallback=null, adTimer=null;
 
 function showScreen(id) {
@@ -2357,7 +2390,16 @@ function doLogin(name, provider){
   document.getElementById('langConfirmBtn').className='lang-confirm-btn';
   document.querySelectorAll('.lang-card').forEach(function(c){c.classList.remove('selected');});
   sbGetOrCreateUser(currentUser).then(function(user){
-    if(user) window._sbUserId = user.id;
+    if(user){
+      window._sbUserId = user.id;
+      // 소셜 로그인 XP 동기화 (로컬 vs Supabase 중 큰 값 사용)
+      var remoteXp = user.xp || 0;
+      var localXp = loadXP();
+      if(remoteXp > localXp){ saveXP(remoteXp); updateXP(); }
+      else if(localXp > remoteXp && localXp > 0){
+        sbFetch('users?username=eq.'+encodeURIComponent(currentUser), { method:'PATCH', body:{ xp: localXp } }).catch(function(){});
+      }
+    }
   }).catch(function(e){ console.warn('SB 유저 등록 실패:', e); });
   showScreen('screenLang');
 }
@@ -2667,7 +2709,6 @@ function startGame(diff) {
   currentDiff = diff;
   round=0; scoreCorrect=0; scoreStreak=0; scoreTotal=0;
   SESSION_SEED = Math.floor(Math.random() * 99991) + 1;
-  usedIndices={easy:[],normal:[],hard:[],extreme:[],insane:[]};
 
   const mp = document.getElementById('modePill');
   mp.textContent = currentMode==='ranked'?'🏆 랭크':'🎮 연습';
@@ -2710,6 +2751,7 @@ function getRandomItem(diff) {
   // 진짜 랜덤: 사용하지 않은 단어 중 완전 무작위 선택
   const idx = avail[Math.floor(Math.random() * avail.length)];
   usedIndices[poolKey].push(idx);
+  saveUsedIndices();
   return {...pool[idx], diff};
 }
 
@@ -2796,11 +2838,8 @@ function startRound() {
     document.getElementById('skipRoundBtn').style.display='';
     document.getElementById('moreHintBtn').style.display = currentMode==='ranked'?'none':'block';
   }
-  // roundDiff는 항상 숨김, 광고 슬롯은 항상 표시
   var _rdiff = document.getElementById('roundDiff');
-  var _adSlot = document.getElementById('inlineAdSlot');
   if(_rdiff) _rdiff.style.display='none';
-  if(_adSlot) _adSlot.style.display='';
   // 경쟁모드: score-bar 숨김, 전광판 표시 / 그 외: 반대
   var _sb = document.getElementById('scoreBar');
   if(_sb) _sb.style.display = (isBattleGame && battleBattleMode==='compete') ? 'none' : '';
@@ -3106,90 +3145,131 @@ function updateScoreUI(){
   document.getElementById('scoreStreak').textContent=scoreStreak;
   document.getElementById('scoreTotal').textContent=scoreTotal;
 }
-function goOnePct(){
-  // INSANE 전용 단어풀 (일상 단어 + 극도로 추상적 힌트)
-  var insaneDB = [
-    {word:'사과', hints:['시안화물 0.06mg','만유인력의 기원','바이트 256분의 1']},
-    {word:'소금', hints:['NaCl','로마 병사의 월급','눈물과 같은 농도']},
-    {word:'거울', hints:['좌우는 바꾸지만 상하는 안 바꾸는','나르키소스의 함정','은을 뒤에 입힌 유리']},
-    {word:'달', hints:['조석력의 원인','완벽한 일식을 만드는 거리','한쪽 면만 보이는']},
-    {word:'커피', hints:['에티오피아 염소 칼디','카페인 C₈H₁₀N₄O₂','마이야르 반응의 결과']},
-    {word:'눈물', hints:['염화나트륨 0.9%','라크리말선의 산물','기쁨과 슬픔이 같은 성분']},
-    {word:'바람', hints:['기압차의 산물','돈키호테가 싸운 것','씨앗을 옮기는 보이지 않는 힘']},
-    {word:'그림자', hints:['정오에 가장 짧아지는','페터 슐레밀이 판 것','플라톤 동굴 속 죄수들이 본 것']},
-    {word:'열쇠', hints:['핀 텀블러','비밀의 수호자','원하는 것의 은유']},
-    {word:'지도', hints:['메르카토르의 왜곡','1:50000의 언어','경위도선의 교차']},
-    {word:'시계', hints:['두 바늘이 겹치는 순간 하루 22번','달리의 물처럼 흐르는','앨리스를 쫓던 흰 토끼가 본 것']},
-    {word:'냉장고', hints:['카르노 사이클의 응용','냉매가 증발하며 빼앗는 열','음식의 시간을 늦추는 기계']},
-    {word:'신발', hints:['인류가 가장 마지막에 입는 것','발의 갑옷','페레스트로이카 시절 줄 서서 산 것']},
-    {word:'안경', hints:['굴절률의 조작','볼록과 오목의 선택','코와 귀 사이에 걸리는 유리']},
-    {word:'치킨', hints:['마이야르 반응이 만드는 갈색','단백질 분해 후 재구성','인류가 가장 많이 키우는 새']},
-  ];
+function getKSTDate(){
+  return new Date().toLocaleDateString('sv-SE', {timeZone:'Asia/Seoul'});
+}
+function getAnonId(){
+  var id = localStorage.getItem('wl_anon_id');
+  if(!id){
+    id = 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+    try{ localStorage.setItem('wl_anon_id', id); }catch(e){}
+  }
+  return id;
+}
+async function loadDailyChallengeStats(dateStr){
+  var data = await sbFetch('daily_challenge_plays?date=eq.'+dateStr+'&select=is_correct');
+  if(!data) return;
+  var total = data.length;
+  var correct = data.filter(function(r){ return r.is_correct; }).length;
+  var rate = total > 0 ? ((correct/total)*100).toFixed(1) : '-';
+  var rateStr = total > 0 ? rate+'%' : '-';
+  document.getElementById('opLiveRate').textContent = rateStr;
+  document.getElementById('opBarFill').style.width = total>0 ? Math.min(parseFloat(rate)*5,100)+'%' : '0%';
+  document.getElementById('opTries').textContent = total;
+  document.getElementById('opCorrects').textContent = correct;
+  document.getElementById('onePctRate').textContent = rateStr;
+  document.getElementById('onePctTries').textContent = total;
+  document.getElementById('onePctCorrect').textContent = correct;
+}
 
-  var today  = new Date();
-  var seed   = today.getFullYear()*10000 + (today.getMonth()+1)*100 + today.getDate();
-  var item   = insaneDB[seed % insaneDB.length];
-  var hints  = item.hints;
+async function goOnePct(){
+  var today = getKSTDate();
+  var dcState = {};
+  try{ dcState = JSON.parse(localStorage.getItem('wl_dc_state')||'{}'); }catch(e){}
+  var alreadyTried = dcState.date === today;
 
+  window._dcDate = today;
+  window._onePctSolved = alreadyTried && !!dcState.solved;
+  window._onePctTried  = alreadyTried;
+  window._dcWrongRecorded = alreadyTried;
+
+  // UI 초기화
   var area = document.getElementById('opHintsArea');
-  area.innerHTML = '';
-  hints.forEach(function(h,i){
-    var card = document.createElement('div');
-    card.className = 'hint-card';
-    card.innerHTML = '<div class="hint-num n'+(i<3?i+1:'x')+'">'+(i+1)+'</div><div class="hint-text">'+h+'</div>';
-    area.appendChild(card);
-    setTimeout(function(){card.classList.add('visible');}, i*200);
-  });
-
-  window._onePctWord   = item.word;
-  window._onePctSolved = false;
-
-  // 정답률 시뮬레이션
-  var fakeTries   = 80 + (seed % 120);
-  var fakeCorrect = Math.floor(fakeTries * (0.005 + (seed%5)*0.001));
-  var rate        = fakeCorrect > 0 ? ((fakeCorrect/fakeTries)*100).toFixed(1) : '0.0';
-
-  document.getElementById('opLiveRate').textContent  = rate + '%';
-  document.getElementById('opBarFill').style.width   = Math.min(parseFloat(rate)*10,100) + '%';
-  document.getElementById('opTries').textContent     = fakeTries;
-  document.getElementById('opCorrects').textContent  = fakeCorrect;
-  document.getElementById('onePctRate').textContent  = rate + '%';
-  document.getElementById('onePctTries').textContent = fakeTries;
-  document.getElementById('onePctCorrect').textContent = fakeCorrect;
-
-  document.getElementById('opInput').value   = '';
+  area.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:0.9rem">불러오는 중...</div>';
+  document.getElementById('opInput').value = '';
   document.getElementById('opInput').disabled = false;
-  document.getElementById('opFeedback').className  = 'feedback';
-  document.getElementById('opReveal').className    = 'answer-reveal';
+  document.getElementById('opInput').className = 'answer-input';
+  document.getElementById('opFeedback').className = 'feedback';
+  document.getElementById('opReveal').className = 'answer-reveal';
   document.getElementById('opNextBtn').style.display = 'none';
   document.getElementById('opShareBtn').style.display = 'none';
-
   showScreen('screenOnePct');
-  setTimeout(function(){document.getElementById('opInput').focus();},400);
+
+  // Supabase에서 오늘 문제 가져오기
+  var data = await sbFetch('daily_challenge?date=eq.'+today+'&select=*');
+  if(!data || !data.length){
+    area.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:0.9rem">오늘의 문제가 아직 준비 중이에요.<br>잠시 후 다시 시도해주세요. 🙏</div>';
+    return;
+  }
+
+  var item = data[0];
+  window._onePctWord = item.word;
+  var hints = [item.hint1,item.hint2,item.hint3,item.hint4,item.hint5,item.hint6].filter(Boolean);
+
+  area.innerHTML = '';
+  hints.forEach(function(h, i){
+    var card = document.createElement('div');
+    card.className = 'hint-card';
+    card.innerHTML = '<div class="hint-num diff-easy">'+(i+1)+'</div><div class="hint-text">'+h+'</div>';
+    area.appendChild(card);
+    setTimeout(function(){ card.classList.add('visible'); }, i*180);
+  });
+
+  if(alreadyTried){
+    document.getElementById('opInput').disabled = true;
+    if(window._onePctSolved){
+      document.getElementById('opInput').className = 'answer-input correct';
+      document.getElementById('opInput').value = item.word;
+      showFeedbackEl('opFeedback','✅ 오늘의 문제는 이미 맞혔어요!','correct-fb');
+      document.getElementById('opShareBtn').style.display = 'block';
+    } else {
+      showFeedbackEl('opFeedback','오늘은 이미 도전했어요. 내일 또 도전하세요!','');
+    }
+  } else {
+    setTimeout(function(){ document.getElementById('opInput').focus(); }, 400);
+  }
+
+  loadDailyChallengeStats(today);
 }
 
-function checkOnePct(){
+async function checkOnePct(){
   var input = document.getElementById('opInput').value.trim();
-  if(!input || window._onePctSolved) return;
-  if(normalizeAnswer(input) === normalizeAnswer(window._onePctWord)){
+  if(!input || window._onePctSolved || window._onePctTried) return;
+  var anonId = getAnonId();
+  var isCorrect = normalizeAnswer(input) === normalizeAnswer(window._onePctWord);
+
+  if(isCorrect){
     window._onePctSolved = true;
-    document.getElementById('opInput').className='answer-input correct';
-    document.getElementById('opInput').disabled=true;
-    showFeedbackEl('opFeedback','✅ 정답! 상위 1%에 들었어요 🎉','correct-fb');
-    document.getElementById('opShareBtn').style.display='block';
-    document.getElementById('opNextBtn').style.display='block';
+    window._onePctTried  = true;
+    document.getElementById('opInput').className = 'answer-input correct';
+    document.getElementById('opInput').disabled = true;
+    showFeedbackEl('opFeedback','✅ 정답! 오늘의 문제를 맞혔어요 🎉','correct-fb');
+    document.getElementById('opShareBtn').style.display = 'block';
+    document.getElementById('opNextBtn').style.display = 'block';
     stats.totalCorrect++; stats.correctExtreme++; stats.totalGames++;
     saveStats(stats); checkMissions();
-    addXP(50); // 오늘의 1% 문제 정답 보너스
+    addXP(50);
+    try{ localStorage.setItem('wl_dc_state', JSON.stringify({date:window._dcDate, solved:true})); }catch(e){}
+    if(window._dcWrongRecorded){
+      // 이미 오답 기록됨 → 정답으로 업데이트
+      await sbFetch('daily_challenge_plays?date=eq.'+window._dcDate+'&anon_id=eq.'+anonId, {method:'PATCH', body:{is_correct:true}});
+    } else {
+      await sbFetch('daily_challenge_plays', {method:'POST', body:{date:window._dcDate, is_correct:true, anon_id:anonId}});
+    }
+    loadDailyChallengeStats(window._dcDate);
   } else {
-    document.getElementById('opInput').className='answer-input wrong';
-    setTimeout(function(){document.getElementById('opInput').className='answer-input';},500);
-    document.getElementById('opInput').value='';
+    document.getElementById('opInput').className = 'answer-input wrong';
+    setTimeout(function(){ document.getElementById('opInput').className='answer-input'; }, 500);
+    document.getElementById('opInput').value = '';
     showFeedbackEl('opFeedback','❌ 틀렸어요! 다시 도전해보세요.','wrong-fb');
+    if(!window._dcWrongRecorded){
+      window._dcWrongRecorded = true;
+      try{ localStorage.setItem('wl_dc_state', JSON.stringify({date:window._dcDate, solved:false})); }catch(e){}
+      await sbFetch('daily_challenge_plays', {method:'POST', body:{date:window._dcDate, is_correct:false, anon_id:anonId}});
+      loadDailyChallengeStats(window._dcDate);
+    }
   }
 }
-
-// 1% 문제 - 정답확인 없음 (광고 없이 순수 도전만)
 
 
 // ═══════════════════════════════
@@ -3225,7 +3305,7 @@ function generateScoreCard(opts) {
   // 서브 라벨
   ctx.fillStyle = '#8B6A5C';
   ctx.font = '600 32px Pretendard, sans-serif';
-  ctx.fillText('오늘의 1% 문제', W/2, logoY + 60);
+  ctx.fillText('오늘의 문제', W/2, logoY + 60);
 
   // 정답 vs 도전 분기
   var solved = !!opts.solved;
@@ -3351,10 +3431,10 @@ async function shareScoreCard(opts) {
     try {
       await navigator.share({
         files: [file],
-        title: 'noonchi 1% 문제',
+        title: 'noonchi 오늘의 문제',
         text: opts.solved
-          ? 'noonchi 오늘의 1% 문제를 맞혔어요! 🎉'
-          : 'noonchi 1% 문제에 도전했어요!'
+          ? 'noonchi 오늘의 문제를 맞혔어요! 🎉'
+          : 'noonchi 오늘의 문제에 도전했어요!'
       });
       return;
     } catch (e) {
@@ -3487,11 +3567,14 @@ function sbRealtimeConnect(battleIdVal, onUpdate){
 }
 
 // ── 대결방 생성 ──
-async function sbCreateBattle(code, diff, mode, wordIdx, wordPool){
+async function sbCreateBattle(code, diff, mode, wordIdx){
   const data = await sbFetch('battles', {
     method: 'POST',
-    body: { code, host_username: currentUser, diff, battle_mode: mode, word_idx: wordIdx, word_pool: wordPool, status: 'waiting', host_premium: isPremium }
+    body: { code, host_username: currentUser, diff, battle_mode: mode, word_idx: wordIdx, status: 'waiting' }
   });
+  if(data && data[0] && isPremium){
+    sbFetch('battles?id=eq.'+data[0].id, { method:'PATCH', body:{ host_premium: true } }).catch(function(){});
+  }
   return data && data[0] ? data[0] : null;
 }
 
@@ -4788,20 +4871,20 @@ async function createBattle(){
   var startBtn=document.getElementById('battleStartBtn');
   if(startBtn) startBtn.style.display='block';
   try{
-    var battle=await sbCreateBattle(battleCode,battleDiff,battleBattleMode,wIdx,battleDiff);
+    var battle=await sbCreateBattle(battleCode,battleDiff,battleBattleMode,wIdx);
     // 코드 중복 등으로 실패 시 코드 재생성 후 1회 재시도
     if(!battle){
       _updateBattleCode(diffIdx, modeIdx, wIdx);
-      battle=await sbCreateBattle(battleCode,battleDiff,battleBattleMode,wIdx,battleDiff);
+      battle=await sbCreateBattle(battleCode,battleDiff,battleBattleMode,wIdx);
     }
-    if(!battle){ alert('방 생성 실패. 다시 시도해주세요.'); return; }
+    if(!battle){ alert('방 생성 실패.\n\n오류: ' + (_sbLastError||'알 수 없음') + '\n\nSupabase battles 테이블이 생성되어 있는지 확인하세요.'); return; }
     battleId=battle.id;
     var player=await sbJoinBattle(battleId,currentUser);
     if(player) myPlayerId=player.id;
     battlePlayers[currentUser]={username:currentUser,status:'joined',solved:false,hint_count:0};
     renderBattlePlayers();
     startBattlePolling(battleId);
-  }catch(e){ console.warn('방 생성 오류:',e); alert('방 생성 중 오류가 났어요. 다시 시도해주세요.'); await battleReset(); return; }
+  }catch(e){ console.warn('방 생성 오류:',e); alert('방 생성 중 오류가 났어요.\n\n' + e.message + '\n오류코드: ' + (_sbLastError||'')); await battleReset(); return; }
   battleShowPanel('code');
 }
 
