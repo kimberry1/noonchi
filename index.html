@@ -1467,8 +1467,13 @@ function checkMaster(email){
 
 // ── XP Supabase 동기화 ──
 function sbSaveXP(email, xp){
-  if(!email || isGuest) return;
-  sbFetch('users?email=eq.'+encodeURIComponent(email), { method:'PATCH', body:{ xp } }).catch(function(){});
+  if(isGuest) return;
+  if(email){
+    sbFetch('users?email=eq.'+encodeURIComponent(email), { method:'PATCH', body:{ xp } }).catch(function(){});
+  } else if(currentUser){
+    // 소셜 로그인 (email 없음) → username으로 저장
+    sbFetch('users?username=eq.'+encodeURIComponent(currentUser), { method:'PATCH', body:{ xp } }).catch(function(){});
+  }
 }
 
 async function sbLoadAndMergeXP(email){
@@ -2071,7 +2076,7 @@ function addXP(amount){
   var oldXp=loadXP();
   var newXp=oldXp+amount;
   saveXP(newXp);
-  if(currentEmail) sbSaveXP(currentEmail, newXp); // Supabase 동기화
+  sbSaveXP(currentEmail, newXp); // Supabase 동기화 (이메일 없으면 username으로)
   var oldInfo=getLevelInfo(oldXp);
   var newInfo=getLevelInfo(newXp);
   updateXP();
