@@ -2,9 +2,9 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "io.github.kimberry1.noonchi",
+    "package_name": "com.noonchi.app",
     "sha256_cert_fingerprints": [
-      "24:58:A2:D2:73:AD:C2:E1:85:86:38:18:9F:F4:E9:57:80:34:B2:B6:62:90:7B:90:71:D1:76:E8:A7:C1:98:C3"
+      "89:E0:4C:66:7D:63:AD:41:A3:E2:EA:A6:6B:BF:87:A5:31:58:BD:4B:DA:46:91:F6:3B:28:98:42:E3:57:26:BE"
     ]
   }
 }]
