@@ -673,6 +673,7 @@ input,button,textarea,select { font-family:inherit; }
   // ── 카카오 SDK 초기화 ── 카카오 개발자 콘솔에서 발급받은 JavaScript 앱키를 입력하세요
   var KAKAO_JS_KEY = '202fdef735b96312e7d6a2eeb1352dd7';
   var KAKAO_REST_KEY = 'ca1a83bd6884408379904e6217d3e9b2';
+  var KAKAO_CLIENT_SECRET = 'ZicEc47AJ2u5Kf8BIujXikupqwQ2UPl0'; // 카카오 개발자 콘솔 > 앱 키 > 클라이언트 시크릿에서 복사
   var VAPID_PUBLIC_KEY = 'BJkMOOv898PCJoz7laF7TJFYhF_gCR9qENgzVtc4nqnjAOoVuy3_anvfJ0zDu1d7xIJPet3ZAF-uI78Ou3oxn0Y';
   if(KAKAO_JS_KEY !== 'YOUR_KAKAO_JS_KEY'){
     Kakao.init(KAKAO_JS_KEY);
@@ -3135,7 +3136,8 @@ function _handleKakaoCallback(){
       grant_type: 'authorization_code',
       client_id: KAKAO_REST_KEY,
       redirect_uri: KAKAO_REDIRECT,
-      code: code
+      code: code,
+      client_secret: KAKAO_CLIENT_SECRET
     })
   })
   .then(function(r){ return r.json(); })
