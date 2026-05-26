@@ -6444,6 +6444,7 @@ async function endRushGame(){
   var today=new Date().toISOString().slice(0,10);
   await sbFetch('rush_scores',{method:'POST',body:{username:currentUser||'게스트',score:rushScore,difficulty:rushDifficulty,play_date:today}});
   var allRows=await sbFetch('rush_scores?play_date=eq.'+today+'&order=score.desc,created_at.asc&select=username,score,created_at')||[];
+  var total=allRows.length;
   var myRank=total, prevScore=-1, prevRank=0;
   for(var i=0;i<allRows.length;i++){
     var r=(allRows[i].score===prevScore)?prevRank:i+1;
