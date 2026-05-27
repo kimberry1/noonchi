@@ -1584,7 +1584,8 @@ input,button,textarea,select { font-family:inherit; }
       </div>
     </div>
     <div class="rush-info-card w400">
-      <div style="font-size:0.85rem;color:var(--text);line-height:1.7">6개의 힌트 중 하나만 다른 단어의 힌트예요.<br><span style="color:var(--muted);font-size:0.8rem">아웃사이더를 찾아 10문제 도전!</span></div>
+      <div style="font-size:0.72rem;color:var(--muted);font-weight:700;letter-spacing:0.08em;margin-bottom:10px">오늘의 TOP 5</div>
+      <div id="spyLeaderboard"><div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:12px 0">아직 도전한 사람이 없어요</div></div>
     </div>
     <div class="w400">
       <button id="spyStartBtn" onclick="launchSpyGame()" style="width:100%;padding:16px;border-radius:14px;border:none;background:#7B30C0;color:#fff;font-family:var(--font-body);font-size:1rem;font-weight:800;cursor:pointer;margin-top:4px">게임 시작</button>
@@ -1620,7 +1621,8 @@ input,button,textarea,select { font-family:inherit; }
     <div style="background:var(--card);border-radius:22px;padding:32px 28px;width:300px;max-width:90%;text-align:center;box-shadow:var(--shadow-lg)">
       <div style="font-size:0.8rem;font-weight:700;color:var(--muted);margin-bottom:6px">스파이 모드 결과</div>
       <div id="spyFinalScore" style="font-size:3rem;font-weight:900;color:#7B30C0;line-height:1;margin:10px 0 4px"></div>
-      <div id="spyFinalSub" style="font-size:0.85rem;color:var(--muted);margin-bottom:24px"></div>
+      <div id="spyFinalSub" style="font-size:0.85rem;color:var(--muted);margin-bottom:4px"></div>
+      <div id="spyFinalRank" style="font-size:0.82rem;color:var(--muted);margin-bottom:20px"></div>
       <div id="spyActionArea" style="display:flex;flex-direction:column;gap:10px"></div>
     </div>
   </div>
@@ -6643,6 +6645,7 @@ async function endRushGame(){
   // 백그라운드: 저장 + 순위 계산
   rushSavedAt=new Date();
   var today=new Date().toISOString().slice(0,10);
+  window._rushShareData = { score:rushScore, difficulty:rushDifficulty, total:0, rank:0, isPB:_isPB };
   await sbFetch('rush_scores',{method:'POST',body:{username:currentUser||'게스트',score:rushScore,difficulty:rushDifficulty,play_date:today}});
   var allRows=await sbFetch('rush_scores?play_date=eq.'+today+'&order=score.desc,created_at.asc&select=username,score,created_at')||[];
   var total=allRows.length;
@@ -6652,6 +6655,7 @@ async function endRushGame(){
     prevRank=r; prevScore=allRows[i].score;
     if(allRows[i].username===currentUser && allRows[i].score===rushScore){ myRank=r; break; }
   }
+  window._rushShareData = { score:rushScore, difficulty:rushDifficulty, total:total, rank:myRank, isPB:_isPB };
   document.getElementById('rushResultRank').textContent=total+'명 도전 중 '+myRank+'등';
   loadRushLeaderboard('rushResultLb', allRows);
 
@@ -6712,20 +6716,91 @@ function rushSkip(){
   rushLoadNextWord();
 }
 
-function shareRushResult(){
-  var gameUrl = 'https://kimberry1.github.io/noonchi/';
-  var rankText = document.getElementById('rushResultRank').textContent;
-  var nativeText = 'noonchi 러쉬모드\n1분에 '+rushScore+'개 맞혔어요!\n'+rankText+'\n'+gameUrl;
-  showShareSheet(
-    function(){
-      if(typeof Kakao === 'undefined' || !Kakao.isInitialized() || !Kakao.Share){ copyRushFallback(nativeText); return; }
-      Kakao.Share.sendDefault({ objectType:'feed', content:{ title:'noonchi 러쉬모드 — '+rushScore+'개!', description:'1분에 '+rushScore+'개 맞혔어요!\n'+rankText, imageUrl:'https://kimberry1.github.io/noonchi/icon-512.png', link:{mobileWebUrl:gameUrl,webUrl:gameUrl} }, buttons:[{title:'나도 도전하기', link:{mobileWebUrl:gameUrl,webUrl:gameUrl}}] });
-    },
-    function(){
-      if(navigator.share){ navigator.share({title:'noonchi 러쉬모드', text:nativeText}).catch(function(e){ if(e.name!=='AbortError') copyRushFallback(nativeText); }); }
-      else { copyRushFallback(nativeText); }
+async function shareRushResult(){
+  var d = window._rushShareData || {score:rushScore, difficulty:rushDifficulty, total:0, rank:0, isPB:false};
+  var url=(typeof getMyReferralURL==='function'&&!isGuest)?getMyReferralURL():'https://kimberry1.github.io/noonchi/';
+  var rankText=document.getElementById('rushResultRank').textContent;
+  var fallbackText='noonchi 러쉬모드\n1분에 '+d.score+'개 맞혔어요!\n'+rankText+'\n'+url;
+  try {
+    var blob=await _generateRushImage(d);
+    var file=new File([blob],'noonchi-rush.png',{type:'image/png'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'noonchi 러쉬모드',text:url}); return;
     }
-  );
+    var blobUrl=URL.createObjectURL(blob);
+    showShareSheet(
+      function(){
+        URL.revokeObjectURL(blobUrl);
+        if(typeof Kakao==='undefined'||!Kakao.isInitialized()||!Kakao.Share){try{navigator.clipboard.writeText(fallbackText);}catch(e){}showShareToast('링크가 복사됐어요!');return;}
+        Kakao.Share.sendDefault({objectType:'feed',content:{title:'noonchi 러쉬모드 — '+d.score+'개!',description:'1분에 '+d.score+'개 맞혔어요!\n'+rankText,imageUrl:'https://kimberry1.github.io/noonchi/icon-512.png',link:{mobileWebUrl:url,webUrl:url}},buttons:[{title:'나도 도전하기',link:{mobileWebUrl:url,webUrl:url}}]});
+      },
+      function(){
+        var a=document.createElement('a');a.href=blobUrl;a.download='noonchi-rush.png';a.click();
+        setTimeout(function(){URL.revokeObjectURL(blobUrl);},1000);
+        try{navigator.clipboard.writeText(fallbackText);}catch(e){}
+        showShareToast('이미지 저장 + 링크 복사됐어요!');
+      }
+    );
+  } catch(e){
+    try{navigator.clipboard.writeText(fallbackText);}catch(e2){}
+    showShareToast('결과가 복사됐어요!');
+  }
+}
+
+async function _generateRushImage(d){
+  await document.fonts.ready;
+  var W=1080, H=1080;
+  var canvas=document.createElement('canvas');
+  canvas.width=W; canvas.height=H;
+  var ctx=canvas.getContext('2d');
+  // 배경
+  var bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#1A0800'); bg.addColorStop(1,'#3D1800');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  // 상단 원형 장식
+  ctx.fillStyle='rgba(255,140,0,0.22)';
+  ctx.beginPath(); ctx.arc(W/2,-50,560,0,Math.PI*2); ctx.fill();
+  // 로고
+  ctx.textAlign='center';
+  ctx.fillStyle='#FFFFFF';
+  ctx.font='bold 68px Pretendard,sans-serif';
+  ctx.fillText('noonchi', W/2, 102);
+  ctx.fillStyle='rgba(255,255,255,0.6)';
+  ctx.font='34px Pretendard,sans-serif';
+  ctx.fillText('러쉬 모드 ⚡', W/2, 156);
+  // 구분선
+  ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(80,183); ctx.lineTo(W-80,183); ctx.stroke();
+  // 점수
+  ctx.fillStyle='#FFB830';
+  ctx.font='bold 220px Pretendard,sans-serif';
+  ctx.fillText(String(d.score), W/2, 490);
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  ctx.font='bold 52px Pretendard,sans-serif';
+  ctx.fillText('개 맞혔어요!', W/2, 562);
+  // 난이도
+  var diffMap={easy:'EASY',normal:'NORMAL',hard:'HARD'};
+  var diffCol={easy:'#4CAF50',normal:'#FFB830',hard:'#FF5252'};
+  ctx.fillStyle=diffCol[d.difficulty]||'#FFB830';
+  ctx.font='bold 42px Pretendard,sans-serif';
+  ctx.fillText(diffMap[d.difficulty]||'', W/2, 650);
+  // 순위
+  if(d.total>0){
+    ctx.font='36px Pretendard,sans-serif';
+    ctx.fillStyle='rgba(255,255,255,0.65)';
+    ctx.fillText(d.total+'명 도전 중 '+d.rank+'등', W/2, 735);
+  }
+  // PB
+  if(d.isPB){
+    ctx.font='bold 42px Pretendard,sans-serif';
+    ctx.fillStyle='#FFD700';
+    ctx.fillText('개인 최고기록!', W/2, 815);
+  }
+  // 워터마크
+  ctx.font='27px Pretendard,sans-serif';
+  ctx.fillStyle='rgba(255,255,255,0.25)';
+  ctx.fillText('noonchi.app', W/2, H-40);
+  return new Promise(function(res){ canvas.toBlob(function(b){ res(b); },'image/png'); });
 }
 
 function copyRushFallback(text){
@@ -6816,6 +6891,7 @@ function enterSpyMode(){
   document.getElementById('spyLobby').style.display = '';
   document.getElementById('spyGame').style.display = 'none';
   showScreen('screenSpy');
+  loadSpyLeaderboard('spyLeaderboard');
 }
 
 function _updateSpyLobbyUI(){
@@ -6930,9 +7006,61 @@ function _showSpyFinal(){
   var pct = Math.round(spyCorrect / SPY_ROUNDS * 100);
   document.getElementById('spyFinalScore').textContent = spyScore + '점';
   document.getElementById('spyFinalSub').textContent = SPY_ROUNDS + '문제 중 ' + spyCorrect + '개 정답 (' + pct + '%)';
+  var rankEl = document.getElementById('spyFinalRank');
+  if(rankEl) rankEl.textContent = '';
   renderSpyResultActions();
   document.getElementById('spyFinalOverlay').style.display = 'flex';
-  if(spyCorrect >= 8) spawnSparkleBurst({x: window.innerWidth/2, y: window.innerHeight/2, count:18, level:'mega'});
+  // 정답 수 기반 celebration
+  if(spyCorrect >= 10)      noonchiBigBang({ banner: '완벽한 눈치!', subBanner: spyCorrect+'/10 정답', sparkleTop:'45%' });
+  else if(spyCorrect >= 8)  noonchiPunch('mega',   { banner: '눈치 만점!', subBanner: spyCorrect+'/10 정답' });
+  else if(spyCorrect >= 6)  noonchiPunch('strong', { banner: '잘했어요', subBanner: spyCorrect+'/10 정답' });
+  else if(spyCorrect >= 4)  noonchiPunch('medium', { banner: '수고했어요', subBanner: spyCorrect+'/10 정답' });
+  // 백그라운드: DB 저장 + 순위 계산
+  _saveSpyScore();
+}
+
+async function _saveSpyScore(){
+  var today = new Date().toISOString().slice(0,10);
+  try {
+    await sbFetch('spy_scores',{method:'POST',body:{username:currentUser||'게스트',score:spyScore,correct:spyCorrect,play_date:today}});
+    var allRows = await sbFetch('spy_scores?play_date=eq.'+today+'&order=score.desc,created_at.asc&select=username,score,correct,created_at')||[];
+    var total = allRows.length;
+    var myRank = total, prevScore=-1, prevRank=0;
+    for(var i=0;i<allRows.length;i++){
+      var r=(allRows[i].score===prevScore)?prevRank:i+1;
+      prevRank=r; prevScore=allRows[i].score;
+      if(allRows[i].username===(currentUser||'게스트') && allRows[i].score===spyScore){ myRank=r; break; }
+    }
+    var rankEl = document.getElementById('spyFinalRank');
+    if(rankEl) rankEl.textContent = total+'명 도전 중 '+myRank+'등';
+    loadSpyLeaderboard('spyLeaderboard', allRows);
+    window._spyShareData = { score:spyScore, correct:spyCorrect, total:total, rank:myRank, username:currentUser||'게스트' };
+    renderSpyResultActions(); // share 버튼 활성화
+  } catch(e){}
+}
+
+async function loadSpyLeaderboard(targetId, cachedRows){
+  var rows;
+  if(cachedRows){
+    rows = cachedRows.slice(0,5);
+  } else {
+    var today = new Date().toISOString().slice(0,10);
+    rows = await sbFetch('spy_scores?play_date=eq.'+today+'&order=score.desc,created_at.asc&limit=5&select=username,score,correct');
+  }
+  var el = document.getElementById(targetId);
+  if(!el) return rows||[];
+  if(!rows||rows.length===0){
+    el.innerHTML='<div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:12px 0">아직 도전한 사람이 없어요</div>';
+    return [];
+  }
+  var medals=['🥇','🥈','🥉'];
+  var html='';
+  rows.forEach(function(r,i){
+    var medal=i<3?medals[i]:(i+1)+'';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0'+(i<rows.length-1?';border-bottom:1px solid var(--border)':'')+'"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:0.88rem;width:22px;text-align:center">'+medal+'</span><span style="font-size:0.88rem;color:var(--text);font-weight:600">'+r.username+'</span></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:0.78rem;color:var(--muted)">'+r.correct+'/10</span><span style="font-size:0.92rem;font-weight:800;color:#7B30C0">'+r.score+'점</span></div></div>';
+  });
+  el.innerHTML=html;
+  return rows;
 }
 
 function renderSpyResultActions(){
@@ -6942,10 +7070,14 @@ function renderSpyResultActions(){
   var total = getSpyTotalAvailable();
   var remaining = total - used;
   var canAdBonus = !isGuest && !isPremium && getSpyAdBonusToday() < SPY_AD_BONUS_MAX;
+  var hasShareData = !!window._spyShareData;
   var S = 'font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;padding:13px;border-radius:12px;width:100%';
   var html = '';
+  if(hasShareData){
+    html += '<button onclick="shareSpyResult()" style="'+S+';border:none;background:#7B30C0;color:#fff">결과 공유하기</button>';
+  }
   if(remaining > 0){
-    html += '<button onclick="retrySpyMode()" style="'+S+';border:none;background:#7B30C0;color:#fff">다시 도전 ('+remaining+'회 남음)</button>';
+    html += '<button onclick="retrySpyMode()" style="'+S+';border:1px solid var(--border);background:var(--surface);color:var(--text)">다시 도전 ('+remaining+'회 남음)</button>';
   } else if(canAdBonus){
     html += '<button onclick="watchAdForSpy()" style="'+S+';border:none;background:var(--accent);color:#fff">광고 보고 +1회 추가</button>';
   }
@@ -6954,6 +7086,97 @@ function renderSpyResultActions(){
     html += '<button onclick="document.getElementById(\'spyFinalOverlay\').style.display=\'none\';doLogout();" style="'+S+';border:1.5px solid #7B30C0;background:transparent;color:#7B30C0;margin-top:2px">기록 저장하고 로그인하기</button>';
   }
   el.innerHTML = html;
+}
+
+async function _generateSpyImage(d){
+  await document.fonts.ready;
+  var W=1080, H=1080;
+  var canvas=document.createElement('canvas');
+  canvas.width=W; canvas.height=H;
+  var ctx=canvas.getContext('2d');
+  // 배경
+  var bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#1A0A2E'); bg.addColorStop(1,'#3D1A6E');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  // 상단 원형 장식
+  ctx.fillStyle='rgba(123,48,192,0.3)';
+  ctx.beginPath(); ctx.arc(W/2,-50,560,0,Math.PI*2); ctx.fill();
+  // 로고
+  ctx.textAlign='center';
+  ctx.fillStyle='#FFFFFF';
+  ctx.font='bold 68px Pretendard,sans-serif';
+  ctx.fillText('noonchi', W/2, 102);
+  ctx.fillStyle='rgba(255,255,255,0.6)';
+  ctx.font='34px Pretendard,sans-serif';
+  ctx.fillText('스파이 모드', W/2, 156);
+  // 구분선
+  ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(80,183); ctx.lineTo(W-80,183); ctx.stroke();
+  // 점수
+  ctx.fillStyle='#C084FC';
+  ctx.font='bold 210px Pretendard,sans-serif';
+  ctx.fillText(d.score+'점', W/2, 480);
+  // 정답 수
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  ctx.font='bold 52px Pretendard,sans-serif';
+  ctx.fillText(d.correct + ' / ' + SPY_ROUNDS + ' 정답', W/2, 558);
+  // 랭크 레이블
+  var RANK_WORDS=['완벽한 눈치','눈치 만점','예리한 눈치','평범한 눈치','연습이 필요해'];
+  var rankIdx=d.correct>=10?0:d.correct>=8?1:d.correct>=6?2:d.correct>=4?3:4;
+  ctx.font='bold 68px Pretendard,sans-serif';
+  ctx.fillStyle='#C084FC';
+  ctx.fillText(RANK_WORDS[rankIdx], W/2, 660);
+  // 순위
+  if(d.total>1){
+    ctx.font='36px Pretendard,sans-serif';
+    ctx.fillStyle='rgba(255,255,255,0.6)';
+    ctx.fillText(d.total+'명 도전 중 '+d.rank+'등', W/2, 730);
+  }
+  // 유저명
+  if(d.username && d.username!=='게스트'){
+    ctx.font='bold 34px Pretendard,sans-serif';
+    ctx.fillStyle='rgba(255,255,255,0.45)';
+    ctx.fillText('@'+d.username, W/2, 810);
+  }
+  // 워터마크
+  ctx.font='27px Pretendard,sans-serif';
+  ctx.fillStyle='rgba(255,255,255,0.25)';
+  ctx.fillText('noonchi.app', W/2, H-40);
+  return new Promise(function(res){ canvas.toBlob(function(b){ res(b); },'image/png'); });
+}
+
+async function shareSpyResult(){
+  var d = window._spyShareData;
+  if(!d){ showShareToast('결과를 먼저 확인해주세요'); return; }
+  var url=(typeof getMyReferralURL==='function'&&!isGuest)?getMyReferralURL():'https://kimberry1.github.io/noonchi/';
+  var RANK_WORDS=['완벽한 눈치','눈치 만점','예리한 눈치','평범한 눈치','연습이 필요해'];
+  var rankIdx=d.correct>=10?0:d.correct>=8?1:d.correct>=6?2:d.correct>=4?3:4;
+  var rankWord=RANK_WORDS[rankIdx];
+  var fallbackText='noonchi 스파이 모드\n'+d.score+'점 — '+d.correct+'/10 정답\n'+rankWord+'\n'+url;
+  try {
+    var blob=await _generateSpyImage(d);
+    var file=new File([blob],'noonchi-spy.png',{type:'image/png'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'noonchi 스파이 모드',text:url}); return;
+    }
+    var blobUrl=URL.createObjectURL(blob);
+    showShareSheet(
+      function(){
+        URL.revokeObjectURL(blobUrl);
+        if(typeof Kakao==='undefined'||!Kakao.isInitialized()||!Kakao.Share){try{navigator.clipboard.writeText(fallbackText);}catch(e){}showShareToast('링크가 복사됐어요!');return;}
+        Kakao.Share.sendDefault({objectType:'feed',content:{title:'noonchi 스파이 모드 — '+d.score+'점',description:d.correct+'/10 정답 · '+rankWord,imageUrl:'https://kimberry1.github.io/noonchi/icon-512.png',link:{mobileWebUrl:url,webUrl:url}},buttons:[{title:'나도 도전하기',link:{mobileWebUrl:url,webUrl:url}}]});
+      },
+      function(){
+        var a=document.createElement('a');a.href=blobUrl;a.download='noonchi-spy.png';a.click();
+        setTimeout(function(){URL.revokeObjectURL(blobUrl);},1000);
+        try{navigator.clipboard.writeText(fallbackText);}catch(e){}
+        showShareToast('이미지 저장 + 링크 복사됐어요!');
+      }
+    );
+  } catch(e){
+    try{navigator.clipboard.writeText(fallbackText);}catch(e2){}
+    showShareToast('결과가 복사됐어요!');
+  }
 }
 
 function watchAdForSpy(){
