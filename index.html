@@ -174,6 +174,14 @@ input,button,textarea,select { font-family:inherit; }
 .mode-card.rush { background:linear-gradient(135deg,#FFF0EB 0%,var(--card) 80%); border-color:#FFCEB5; }
 .mode-card.rush .mode-title { color:var(--accent2); }
 .mode-card.rush .mode-tag { background:#FFE5DC; color:var(--accent2); }
+.mode-card.spy { background:linear-gradient(135deg,#F4EDFF 0%,var(--card) 80%); border-color:#D4B8F0; }
+.mode-card.spy .mode-title { color:#7B30C0; }
+.spy-hint-card { background:var(--card); border:1.5px solid var(--border-strong); border-radius:16px; padding:16px 12px; text-align:center; font-family:var(--font-body); font-weight:700; font-size:0.95rem; cursor:pointer; transition:transform 0.15s,box-shadow 0.15s,background 0.2s,border-color 0.2s; box-shadow:var(--shadow-sm); min-height:58px; display:flex; align-items:center; justify-content:center; word-break:keep-all; line-height:1.35; }
+.spy-hint-card:active { transform:scale(0.95); }
+.spy-card-real { background:#E8F5ED; border-color:#2A8C5F !important; color:#1A5F3A; cursor:default; }
+.spy-card-fake { background:#FFEAE8; border-color:#C5410B !important; color:#8B2000; cursor:default; }
+.spy-card-picked-right { box-shadow:0 0 0 3px rgba(42,140,95,0.4) !important; }
+.spy-card-picked-wrong { box-shadow:0 0 0 3px rgba(197,65,11,0.4) !important; }
 
 /* 러쉬모드 타이머 바 */
 #rushBar { display:none; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:10px 16px; margin-bottom:10px; flex-direction:row; align-items:center; justify-content:space-between; }
@@ -1414,6 +1422,10 @@ input,button,textarea,select { font-family:inherit; }
     <div class="mode-card rush" onclick="enterRushMode()">
       <div class="mode-title">러쉬모드</div>
     </div>
+    <div class="mode-card spy" onclick="enterSpyMode()">
+      <div class="mode-title">스파이 모드</div>
+      <div class="mode-desc">6개 힌트 중 숨어든 아웃사이더를 찾아라</div>
+    </div>
   </div>
 </div>
 
@@ -1445,6 +1457,47 @@ input,button,textarea,select { font-family:inherit; }
 
     <button id="rushStartBtn" onclick="launchRushGame()" style="width:100%;padding:16px;border-radius:14px;border:none;background:var(--accent2);color:#fff;font-family:var(--font-body);font-size:1rem;font-weight:800;cursor:pointer;margin-top:4px">60초 시작</button>
     <div id="rushNoAttemptsMsg" style="display:none;text-align:center;color:var(--muted);font-size:0.85rem;padding:12px 0">오늘 도전 횟수를 모두 사용했어요</div>
+  </div>
+</div>
+
+<!-- 스파이 모드 -->
+<div class="screen" id="screenSpy">
+  <div class="logo">n<span class="logo-eyes" aria-hidden="true"><span class="logo-eye logo-eye-l"></span><span class="logo-eye logo-eye-r"></span></span>nchi<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">oo</span></div>
+  <div class="w400 nav-bar">
+    <button class="nav-back" onclick="showScreen('screenSolo')">← 뒤로</button>
+    <span class="nav-title">스파이 모드</span>
+  </div>
+  <div class="w400" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <span id="spyRoundLabel" style="font-size:0.82rem;font-weight:700;color:var(--muted)">1 / 10</span>
+    <span id="spyScoreDisp" style="font-size:0.88rem;font-weight:800;color:#7B30C0">0점</span>
+  </div>
+  <div class="w400" style="height:5px;background:var(--surface);border-radius:10px;margin-bottom:22px;overflow:hidden">
+    <div id="spyProgressBar" style="height:100%;background:#7B30C0;border-radius:10px;transition:width 0.4s;width:0%"></div>
+  </div>
+  <div class="w400" style="text-align:center;margin-bottom:22px">
+    <div style="font-family:var(--font-body);font-size:1.05rem;font-weight:800;color:var(--text)">아웃사이더 힌트를 찾아라</div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-top:5px">6개 중 하나만 다른 단어의 힌트예요</div>
+  </div>
+  <div class="w400" id="spyHintGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px"></div>
+  <div id="spyResultArea" class="w400" style="display:none;background:var(--surface);border:1.5px solid var(--border-strong);border-radius:16px;padding:16px 18px;margin-bottom:16px">
+    <div id="spyResultMsg" style="font-family:var(--font-body);font-size:1rem;font-weight:800;margin-bottom:12px;text-align:center"></div>
+    <div style="font-size:0.82rem;line-height:2;color:var(--text-soft)">
+      <div>나머지 5개 힌트 → <strong id="spyRevealReal" style="color:var(--text)"></strong>의 힌트</div>
+      <div>아웃사이더 힌트 → <strong id="spyRevealFake" style="color:#C5410B"></strong>의 힌트</div>
+    </div>
+  </div>
+  <button id="spyNextBtn" onclick="nextSpyRound()" style="display:none;width:100%;max-width:400px;padding:15px;border-radius:14px;border:none;background:#7B30C0;color:#fff;font-family:var(--font-body);font-size:0.96rem;font-weight:800;cursor:pointer">다음 문제 →</button>
+  <!-- 최종 결과 오버레이 -->
+  <div id="spyFinalOverlay" style="display:none;position:fixed;inset:0;background:rgba(43,26,18,0.55);z-index:300;justify-content:center;align-items:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)">
+    <div style="background:var(--card);border-radius:22px;padding:32px 28px;width:300px;max-width:90%;text-align:center;box-shadow:var(--shadow-lg)">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--muted);margin-bottom:6px">스파이 모드 결과</div>
+      <div id="spyFinalScore" style="font-size:3rem;font-weight:900;color:#7B30C0;line-height:1;margin:10px 0 4px"></div>
+      <div id="spyFinalSub" style="font-size:0.85rem;color:var(--muted);margin-bottom:24px"></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="retrySpyMode()" style="width:100%;padding:13px;border-radius:12px;border:none;background:#7B30C0;color:#fff;font-family:var(--font-body);font-size:0.9rem;font-weight:700;cursor:pointer">다시 도전</button>
+        <button onclick="document.getElementById('spyFinalOverlay').style.display='none';showScreen('screenSolo')" style="width:100%;padding:13px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:var(--font-body);font-size:0.85rem;cursor:pointer">나가기</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1899,14 +1952,6 @@ input,button,textarea,select { font-family:inherit; }
   <div class="w400" id="battleJoinConfirm" style="display:none"></div>
 </div>
 
-<!-- 카운트다운 오버레이 -->
-<div class="confirm-overlay" id="battleCountdown" style="background:rgba(43,26,18,0.55)">
-  <div style="text-align:center">
-    <div id="cdNum" style="font-family:var(--font-display);font-size:6rem;color:var(--warn);line-height:1;animation:bounce 0.4s ease infinite alternate">3</div>
-    <div id="cdLabel" style="font-size:1rem;color:var(--muted);margin-top:12px;letter-spacing:0.1em">준비하세요...</div>
-  </div>
-</div>
-
 <!-- 대결 결과 오버레이 -->
 <div class="confirm-overlay" id="battleResultOverlay">
   <div class="confirm-box" style="max-width:340px;position:relative">
@@ -2073,51 +2118,6 @@ function showLoadingOverlay(msg) {
 function hideLoadingOverlay() {
   var el = document.getElementById('loadingOverlay');
   if (el) el.style.display = 'none';
-}
-
-// 콘솔에서 exportWordsForSupabase() 실행 → JSON 파일 다운로드
-// Supabase Table Editor에서 Insert → JSON import 사용
-function exportWordsForSupabase() {
-  var pool = (typeof _wordPool !== 'undefined') ? _wordPool : (wordDB.easy || []);
-  var rows = pool.map(function(item) {
-    return {
-      word:      item.word,
-      hints_1st: item.hints_1st || item.hints || [],
-      hints_2nd: item.hints_2nd || [],
-      lang:      'ko',
-      active:    true
-    };
-  });
-  var blob = new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json' });
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  a.href = url; a.download = 'noonchi_words_export.json'; a.click();
-  URL.revokeObjectURL(url);
-  console.log('export 완료: ' + rows.length + '개 단어');
-}
-
-// 콘솔에서 exportWordsAsSQL() 실행 → .sql 파일 다운로드
-// Supabase SQL Editor에 그대로 붙여넣고 실행하면 import 완료
-function exportWordsAsSQL() {
-  var pool = (typeof _wordPool !== 'undefined') ? _wordPool : (wordDB.easy || []);
-  var esc = function(s){ return (s||'').replace(/'/g, "''"); };
-  var arrLit = function(arr){
-    if(!arr||!arr.length) return 'ARRAY[]::text[]';
-    return 'ARRAY[' + arr.map(function(h){ return "'" + esc(h) + "'"; }).join(',') + ']';
-  };
-  var values = pool.map(function(item){
-    return "('" + esc(item.word) + "'," +
-      arrLit(item.hints_1st || item.hints) + ',' +
-      arrLit(item.hints_2nd) + ",'ko',true)";
-  });
-  var sql = 'INSERT INTO words (word,hints_1st,hints_2nd,lang,active) VALUES\n' +
-    values.join(',\n') + '\nON CONFLICT DO NOTHING;';
-  var blob = new Blob([sql], { type: 'text/plain' });
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  a.href = url; a.download = 'noonchi_words_import.sql'; a.click();
-  URL.revokeObjectURL(url);
-  console.log('SQL 변환 완료: ' + pool.length + '개 단어');
 }
 
 // ── 유저 등록/조회 ──
@@ -2595,20 +2595,6 @@ async function sbGetRanking(diff){
   return data || [];
 }
 
-// ── Supabase 연결 테스트 (콘솔에서 sbTest() 호출) ──
-async function sbTest(){
-  console.log('=== Supabase 연결 테스트 시작 ===');
-  // 1. 유저 등록
-  const user = await sbGetOrCreateUser('테스트유저');
-  console.log('유저 등록/조회:', user);
-  // 2. 점수 저장
-  await sbSaveScore('테스트유저','easy','practice',1,1,3);
-  console.log('점수 저장 완료');
-  // 3. 랭킹 조회
-  const ranks = await sbGetRanking('easy');
-  console.log('랭킹 조회:', ranks);
-  console.log('=== 테스트 완료 ===');
-}
 const skipTaunts = [
   { emoji:"😏", msg:"튀?", sub:"도망가는 거야?\n이 단어는 영원히 미스터리로 남아요." },
   { emoji:"🐔", msg:"겁쟁이?", sub:"조금만 더 생각하면 맞힐 수 있는데..." },
@@ -2625,7 +2611,6 @@ const skipTaunts = [
 ];
 
 // ── 단어 DB (통합 단어풀 — 난이도는 힌트 조합으로 결정) ──
-// wordDB: confirmLang()에서 loadWords() 후 initWordDB()로 채워짐
 // wordDB: confirmLang()에서 loadWords() 후 initWordDB()로 채워짐
 var wordDB = { easy: [], normal: [], hard: [], extreme: [], insane: [] };
 
@@ -2765,9 +2750,6 @@ function renderStreakBanner(){
   }
   days.innerHTML=html;
 }
-
-// updateLoginStreak는 이하 checkAttendance()에 통합됨 — 로그인 핸들러에서 더 이상 직접 호출하지 않음
-function updateLoginStreak(){ /* deprecated — checkAttendance()로 통합 */ }
 
 // ── 오늘의 문제 정답 스트릭 ──
 function renderOnePctStreakBanner(){
@@ -5414,7 +5396,6 @@ function onBattleChange(battle){
     // 오버레이 전부 닫기
     document.getElementById('battleResultOverlay').className='confirm-overlay';
     document.getElementById('partyVoteOverlay').className='party-vote-overlay';
-    document.getElementById('battleCountdown').className='confirm-overlay';
     // 상황별 메시지
     var closedMsg;
     if(battle._deleted){
@@ -5816,11 +5797,6 @@ function startHeartbeat(){
 function stopHeartbeat(){
   if(_heartbeatTimer){ clearInterval(_heartbeatTimer); _heartbeatTimer=null; }
 }
-
-function showVotePopup(){}
-function renderVoteStatus(){}
-async function submitVote(){}
-function closeVotePopup(){}
 
 // ── 파티 힌트 요청 (광고 보고 힌트) ──
 // ── 파티모드: 방장만 힌트/정답 요청 ──
@@ -6568,6 +6544,123 @@ function spendCoinsForRush(){
 }
 
 // ══════════════════════════════════════════
+//  스파이 모드
+// ══════════════════════════════════════════
+var SPY_ROUNDS = 10;
+var spyRound = 0, spyScore = 0, spyCorrect = 0;
+var spyWord = '', spyFakeWord = '';
+var spyHints = [];
+var spyAnswered = false;
+
+function _spyShuffle(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; }
+  return a;
+}
+
+function _spyWordPool(){
+  return (wordDB.easy||[]).concat(wordDB.normal||[]).concat(wordDB.hard||[]);
+}
+
+function enterSpyMode(){
+  if(!wordDB.easy||!wordDB.easy.length){ showShareToast('단어 데이터 로딩 중이에요'); return; }
+  spyRound = 0; spyScore = 0; spyCorrect = 0;
+  showScreen('screenSpy');
+  startSpyRound();
+}
+
+function startSpyRound(){
+  spyRound++;
+  spyAnswered = false;
+  var pool = _spyWordPool();
+  if(pool.length < 2){ showShareToast('단어 데이터가 부족해요'); return; }
+
+  // word A: 힌트 5개 이상 확보
+  var wA, hintsA, tries = 0;
+  do {
+    wA = pool[Math.floor(Math.random() * pool.length)];
+    hintsA = _spyShuffle(wA.hints_1st || wA.hints || []);
+  } while(hintsA.length < 5 && ++tries < 30);
+  spyWord = wA.word;
+  var realHints = hintsA.slice(0, 5);
+
+  // word B: 완전히 다른 단어
+  var wB, tries2 = 0;
+  do { wB = pool[Math.floor(Math.random() * pool.length)]; } while(wB.word === spyWord && ++tries2 < 30);
+  spyFakeWord = wB.word;
+  var hintsB = wB.hints_1st || wB.hints || [];
+  var fakeHint = hintsB[Math.floor(Math.random() * hintsB.length)] || '?';
+
+  spyHints = _spyShuffle(
+    realHints.map(function(h){ return {text:h, isFake:false}; }).concat([{text:fakeHint, isFake:true}])
+  );
+  _renderSpyRound();
+}
+
+function _renderSpyRound(){
+  document.getElementById('spyRoundLabel').textContent = spyRound + ' / ' + SPY_ROUNDS;
+  document.getElementById('spyScoreDisp').textContent = spyScore + '점';
+  document.getElementById('spyProgressBar').style.width = ((spyRound - 1) / SPY_ROUNDS * 100) + '%';
+  document.getElementById('spyResultArea').style.display = 'none';
+  document.getElementById('spyNextBtn').style.display = 'none';
+  var grid = document.getElementById('spyHintGrid');
+  grid.innerHTML = '';
+  spyHints.forEach(function(h, i){
+    var card = document.createElement('div');
+    card.className = 'spy-hint-card';
+    card.id = 'spyCard' + i;
+    card.textContent = h.text;
+    (function(idx){ card.addEventListener('click', function(){ selectSpyHint(idx); }); })(i);
+    grid.appendChild(card);
+  });
+}
+
+function selectSpyHint(idx){
+  if(spyAnswered) return;
+  spyAnswered = true;
+  var correct = spyHints[idx].isFake;
+  if(correct){ spyScore += 10; spyCorrect++; }
+  playSound(correct ? 'correct' : 'wrong');
+  if(correct) spawnSparkleBurst({x: window.innerWidth/2, y: window.innerHeight*0.45, count:10, level:'normal'});
+
+  spyHints.forEach(function(h, i){
+    var card = document.getElementById('spyCard' + i);
+    card.classList.add(h.isFake ? 'spy-card-fake' : 'spy-card-real');
+    if(i === idx) card.classList.add(h.isFake ? 'spy-card-picked-right' : 'spy-card-picked-wrong');
+    card.style.cursor = 'default';
+  });
+
+  var resultArea = document.getElementById('spyResultArea');
+  resultArea.style.display = 'block';
+  var msg = document.getElementById('spyResultMsg');
+  msg.textContent = correct ? '정답! 눈치가 빠르네요' : '이번엔 속았네요';
+  msg.style.color = correct ? '#2A8C5F' : '#C5410B';
+  document.getElementById('spyRevealReal').textContent = '"' + spyWord + '"';
+  document.getElementById('spyRevealFake').textContent = '"' + spyFakeWord + '"';
+
+  var btn = document.getElementById('spyNextBtn');
+  btn.style.display = 'block';
+  btn.textContent = spyRound >= SPY_ROUNDS ? '결과 보기' : '다음 문제 →';
+}
+
+function nextSpyRound(){
+  if(spyRound >= SPY_ROUNDS){ _showSpyFinal(); } else { startSpyRound(); }
+}
+
+function _showSpyFinal(){
+  var pct = Math.round(spyCorrect / SPY_ROUNDS * 100);
+  document.getElementById('spyFinalScore').textContent = spyScore + '점';
+  document.getElementById('spyFinalSub').textContent = SPY_ROUNDS + '문제 중 ' + spyCorrect + '개 정답 (' + pct + '%)';
+  document.getElementById('spyFinalOverlay').style.display = 'flex';
+  if(spyCorrect >= 8) spawnSparkleBurst({x: window.innerWidth/2, y: window.innerHeight/2, count:18, level:'mega'});
+}
+
+function retrySpyMode(){
+  document.getElementById('spyFinalOverlay').style.display = 'none';
+  enterSpyMode();
+}
+
+// ══════════════════════════════════════════
 
 async function battleReset(){
   // 빈 방 자동 종료 타이머 + 하트비트 취소
@@ -6597,7 +6690,6 @@ async function battleReset(){
   if(_sbReset) _sbReset.style.display = '';
   document.getElementById('battleResultOverlay').className='confirm-overlay';
   document.getElementById('partyVoteOverlay').className='party-vote-overlay';
-  document.getElementById('battleCountdown').className='confirm-overlay';
   // 4. DB 정리 (_bid, _pid 사용 — 위에서 battleId/myPlayerId는 이미 null)
   if(_pid){
     try{
@@ -6635,7 +6727,6 @@ async function battleReset(){
   // 4. 오버레이 닫기
   document.getElementById('battleResultOverlay').className='confirm-overlay';
   document.getElementById('partyVoteOverlay').className='party-vote-overlay';
-  document.getElementById('battleCountdown').className='confirm-overlay';
   // 5. UI 완전 리셋
   var rb=document.getElementById('battleReadyBtn');
   if(rb){rb.style.display='block';rb.disabled=false;}
@@ -7219,35 +7310,32 @@ async function joinBattleWithSB(){
 }
 
 function startCountdown(cb){
-  // 이미 카운트다운 중이면 무시
   if(window._countdownRunning) return;
   window._countdownRunning = true;
-  var overlay=document.getElementById('battleCountdown');
-  var numEl=document.getElementById('cdNum');
-  var labelEl=document.getElementById('cdLabel');
-  overlay.className='confirm-overlay show';
-  var count=3;
-  numEl.textContent=count;
-  labelEl.textContent='준비하세요...';
-  var timer=setInterval(function(){
-    count--;
-    if(count>0){
-      numEl.textContent=count;
-      numEl.style.animation='none'; void numEl.offsetWidth; numEl.style.animation='bounce 0.4s ease infinite alternate';
-    } else {
-      clearInterval(timer);
-      numEl.textContent='GO!';
-      numEl.style.color='#5cf0a0';
-      numEl.style.animation='none'; void numEl.offsetWidth; numEl.style.animation='bounce 0.4s ease infinite alternate';
-      labelEl.textContent='시작!';
-      setTimeout(function(){
-        overlay.className='confirm-overlay';
-        numEl.style.color='#f7a03a';
-        window._countdownRunning = false;
-        if(cb) cb();
-      },700);
+  var overlay = document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;z-index:800;display:flex;align-items:center;justify-content:center;pointer-events:all;background:rgba(43,26,18,0.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);';
+  var num = document.createElement('div');
+  num.style.cssText='font-family:var(--font-body);font-size:5rem;font-weight:900;color:var(--primary);text-shadow:0 4px 0 var(--wine-hard);letter-spacing:-0.05em;transition:all 0.15s;';
+  overlay.appendChild(num);
+  document.body.appendChild(overlay);
+  var counts = [3,2,1];
+  var i = 0;
+  function tick(){
+    if(i >= counts.length){
+      overlay.remove();
+      window._countdownRunning = false;
+      if(cb) cb();
+      return;
     }
-  },1000);
+    num.textContent = counts[i];
+    num.style.transform='scale(1.3)';
+    num.style.opacity='1';
+    playSound('pop');
+    setTimeout(function(){ num.style.transform='scale(0.8)'; num.style.opacity='0.3'; }, 600);
+    i++;
+    setTimeout(tick, 900);
+  }
+  tick();
 }
 
 function _launchBattleGame(){
