@@ -1658,13 +1658,20 @@ input,button,textarea,select { font-family:inherit; }
     <button id="spyNextBtn" onclick="nextSpyRound()" style="display:none;width:100%;padding:15px;border-radius:14px;border:none;background:#7B30C0;color:#fff;font-family:var(--font-body);font-size:0.96rem;font-weight:800;cursor:pointer">다음 문제 →</button>
   </div>
   <!-- 최종 결과 오버레이 -->
-  <div id="spyFinalOverlay" style="display:none;position:fixed;inset:0;background:rgba(43,26,18,0.55);z-index:300;justify-content:center;align-items:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)">
-    <div style="background:var(--card);border-radius:22px;padding:32px 28px;width:300px;max-width:90%;text-align:center;box-shadow:var(--shadow-lg)">
-      <div style="font-size:0.8rem;font-weight:700;color:var(--muted);margin-bottom:6px">스파이 모드 결과</div>
-      <div id="spyFinalScore" style="font-size:3rem;font-weight:900;color:#7B30C0;line-height:1;margin:10px 0 4px"></div>
-      <div id="spyFinalSub" style="font-size:0.85rem;color:var(--muted);margin-bottom:4px"></div>
-      <div id="spyFinalRank" style="font-size:0.82rem;color:var(--muted);margin-bottom:20px"></div>
-      <div id="spyActionArea" style="display:flex;flex-direction:column;gap:10px"></div>
+  <div id="spyFinalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;justify-content:center;align-items:center;padding:16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)">
+    <div class="rr-card">
+      <div style="background:linear-gradient(135deg,#7B30C0,#b06ae0);padding:28px 24px 36px;text-align:center;position:relative;border-radius:24px 24px 0 0;">
+        <button class="popup-x" onclick="closeSpyResult()" style="color:rgba(255,255,255,0.85)">✕</button>
+        <div style="font-size:0.7rem;font-weight:700;color:rgba(255,255,255,0.8);letter-spacing:0.12em;margin-bottom:6px">스파이 모드 결과</div>
+        <div id="spyFinalScore" style="font-size:4.2rem;font-weight:900;color:#fff;line-height:1;font-family:var(--font-mono)"></div>
+        <div style="font-size:0.88rem;font-weight:700;color:rgba(255,255,255,0.9);margin-top:4px">점수</div>
+        <div id="spyFinalRank" style="display:inline-block;background:rgba(255,255,255,0.28);color:#fff;font-size:0.78rem;font-weight:700;border-radius:99px;padding:4px 14px;margin-top:10px"></div>
+        <div style="content:'';position:absolute;bottom:-1px;left:0;right:0;height:22px;background:var(--card);border-radius:100% 100% 0 0"></div>
+      </div>
+      <div style="padding:18px 20px 20px">
+        <div id="spyFinalSub" style="font-size:0.85rem;color:var(--muted);text-align:center;margin-bottom:16px"></div>
+        <div id="spyActionArea" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -5273,18 +5280,23 @@ function playSound(type){
         o.start(t); o.stop(t+0.35);
       });
     } else if(type === 'fanfare'){
-      [523,659,784,1047,1319].forEach(function(freq, i){
+      // 1등 팡파레: 2옥타브 화음 + 마지막 고음 유지
+      var notes = [523,659,784,1047,1319,1568];
+      notes.forEach(function(freq, i){
         var o=ctx.createOscillator(), g=ctx.createGain();
         o.connect(g); g.connect(ctx.destination);
         o.type='sine'; o.frequency.value=freq;
-        var t=ctx.currentTime+i*0.11;
-        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.3,t+0.04); g.gain.exponentialRampToValueAtTime(0.001,t+0.45);
-        o.start(t); o.stop(t+0.5);
+        var t=ctx.currentTime+i*0.10;
+        var peak = i===notes.length-1 ? 0.55 : 0.45;
+        var hold = i===notes.length-1 ? 0.7 : 0.38;
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(peak,t+0.03); g.gain.exponentialRampToValueAtTime(0.001,t+hold);
+        o.start(t); o.stop(t+hold+0.05);
+        // 옥타브 하모닉
         var o2=ctx.createOscillator(), g2=ctx.createGain();
         o2.connect(g2); g2.connect(ctx.destination);
-        o2.type='sine'; o2.frequency.value=freq/2;
-        g2.gain.setValueAtTime(0,t); g2.gain.linearRampToValueAtTime(0.1,t+0.04); g2.gain.exponentialRampToValueAtTime(0.001,t+0.4);
-        o2.start(t); o2.stop(t+0.45);
+        o2.type='triangle'; o2.frequency.value=freq/2;
+        g2.gain.setValueAtTime(0,t); g2.gain.linearRampToValueAtTime(0.18,t+0.03); g2.gain.exponentialRampToValueAtTime(0.001,t+hold);
+        o2.start(t); o2.stop(t+hold+0.05);
       });
     } else if(type === 'correct'){
       [523,659,784,1047].forEach(function(f,i){
@@ -5334,15 +5346,48 @@ function playSound(type){
 
 function noonchiBigBang(opts){
   opts = opts || {};
+  // 플래시 2번
   var flash = document.createElement('div');
   flash.className = 'bigbang-flash';
   document.body.appendChild(flash);
-  setTimeout(function(){ flash.remove(); }, 600);
+  setTimeout(function(){ flash.remove(); }, 500);
+  setTimeout(function(){
+    var flash2 = document.createElement('div');
+    flash2.className = 'bigbang-flash';
+    flash2.style.opacity = '0.5';
+    document.body.appendChild(flash2);
+    setTimeout(function(){ flash2.remove(); }, 400);
+  }, 520);
   playSound('fanfare');
-  noonchiPunch('mega', opts);
-  setTimeout(function(){ spawnSparkleBurst({ count: 36, top: '35%' }); }, 120);
-  setTimeout(function(){ spawnSparkleBurst({ count: 28, top: '55%' }); }, 280);
-  setTimeout(function(){ spawnSparkleBurst({ count: 22, top: '45%' }); }, 460);
+  // 컨페티 2배
+  var COLORS = ['#6B2418','#C8E843','#FF3D7F','#FFB37A','#7FA814','#FCE8DC','#FFD700','#00CFFF'];
+  var rain = document.createElement('div');
+  rain.className = 'confetti-rain';
+  for(var i=0;i<380;i++){
+    var bit=document.createElement('span'); bit.className='confetti-bit';
+    var color=COLORS[Math.floor(Math.random()*COLORS.length)];
+    var left=Math.random()*100, drift=(Math.random()-0.5)*200, spin=(Math.random()-0.5)*1800;
+    var dur=1600+Math.random()*2000, delay=Math.random()*800;
+    var w=5+Math.random()*10, h=w+Math.random()*10;
+    var round=Math.random()<0.25?'50%':(Math.random()<0.5?'2px':'0');
+    bit.style.cssText='left:'+left+'vw;width:'+w+'px;height:'+h+'px;background:'+color+';border-radius:'+round+';--drift:'+drift+'px;--spin:'+spin+'deg;--dur:'+dur+'ms;--delay:'+delay+'ms';
+    rain.appendChild(bit);
+  }
+  document.body.appendChild(rain);
+  setTimeout(function(){ rain.remove(); }, 5000);
+  // 스파클 6연발
+  if(opts.banner){
+    var b=document.createElement('div');
+    b.className='punch-banner mega';
+    b.innerHTML=opts.banner+(opts.subBanner?'<small>'+opts.subBanner+'</small>':'');
+    document.body.appendChild(b);
+    setTimeout(function(){ b.remove(); }, 2400);
+  }
+  var sparkleTops=['30%','50%','40%','25%','55%','45%'];
+  var sparkleCounts=[48,38,44,32,36,28];
+  sparkleTops.forEach(function(top, i){
+    setTimeout(function(){ spawnSparkleBurst({ count:sparkleCounts[i], top:top }); }, i*130);
+  });
 }
 
 function nextRound(){
@@ -7251,6 +7296,9 @@ function watchAdForSpy(){
   showAd('spy');
 }
 
+function closeSpyResult(){
+  document.getElementById('spyFinalOverlay').style.display = 'none';
+}
 function retrySpyMode(){
   document.getElementById('spyFinalOverlay').style.display = 'none';
   enterSpyMode();
