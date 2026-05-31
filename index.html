@@ -3578,6 +3578,12 @@ function doLogin(provider, providerId){
       currentUser = user.username || randomName;
       window._sbUserId = user.id;
       document.getElementById('userNameDisplay').textContent = currentUser;
+      // 다른 계정 로그인 시 로컬 데이터 초기화
+      var _prevId = localStorage.getItem('wl_user_id');
+      if(_prevId && _prevId !== String(user.id)){
+        ['wl_stats','wl_xp','wl_daily','wl_wrongnote','wl_used_idx','wl_rush_pb','wl_avatar'].forEach(function(k){ localStorage.removeItem(k); });
+      }
+      try{ localStorage.setItem('wl_user_id', String(user.id)); }catch(e){}
       if(user.avatar){
         try{ localStorage.setItem('wl_avatar', user.avatar); }catch(e){}
         if(_bar) _bar.textContent = user.avatar;
