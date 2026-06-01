@@ -1554,7 +1554,7 @@ input,button,textarea,select { font-family:inherit; }
 
     <button id="rushStartBtn" onclick="launchRushGame()" style="width:100%;padding:16px;border-radius:14px;border:none;background:var(--accent2);color:#fff;font-family:var(--font-body);font-size:1rem;font-weight:800;cursor:pointer;margin-top:4px">60초 시작</button>
     <div id="rushNoAttemptsMsg" style="display:none;text-align:center;color:var(--muted);font-size:0.85rem;padding:12px 0">오늘 도전 횟수를 모두 사용했어요<br><span style="font-size:0.78rem">내일 다시 도전하거나 광고를 보고 추가 기회를 받아요</span></div>
-    <div id="rushAdBonusBtn" style="display:none;margin-top:8px"><button onclick="watchAdForRush()" style="width:100%;padding:13px;border-radius:12px;border:none;background:var(--accent2);color:#fff;font-family:var(--font-body);font-size:0.9rem;font-weight:700;cursor:pointer">광고 보고 +1회 추가</button></div>
+    <div id="rushAdBonusBtn" style="display:none;margin-top:8px"><button onclick="watchAdForRush()" style="width:100%;padding:13px;border-radius:12px;border:none;background:var(--accent2);color:#fff;font-family:var(--font-body);font-size:0.9rem;font-weight:700;cursor:pointer">광고 보고 +3회 추가</button></div>
   </div>
 </div>
 
@@ -1594,7 +1594,7 @@ input,button,textarea,select { font-family:inherit; }
     </div>
     <button id="spyStartBtn" onclick="launchSpyGame()" style="width:100%;padding:16px;border-radius:14px;border:none;background:#7B30C0;color:#fff;font-family:var(--font-body);font-size:1rem;font-weight:800;cursor:pointer;margin-top:4px">게임 시작</button>
     <div id="spyNoAttemptsMsg" style="display:none;text-align:center;color:var(--muted);font-size:0.85rem;padding:12px 0">오늘 도전 횟수를 모두 사용했어요<br><span style="font-size:0.78rem">내일 다시 도전하거나 광고를 보고 추가 기회를 받아요</span></div>
-    <div id="spyAdBonusBtn" style="display:none;margin-top:8px"><button onclick="watchAdForSpy()" style="width:100%;padding:13px;border-radius:12px;border:none;background:#7B30C0;color:#fff;font-family:var(--font-body);font-size:0.9rem;font-weight:700;cursor:pointer">광고 보고 +1회 추가</button></div>
+    <div id="spyAdBonusBtn" style="display:none;margin-top:8px"><button onclick="watchAdForSpy()" style="width:100%;padding:13px;border-radius:12px;border:none;background:#7B30C0;color:#fff;font-family:var(--font-body);font-size:0.9rem;font-weight:700;cursor:pointer">광고 보고 +3회 추가</button></div>
   </div>
   <!-- 게임 영역 -->
   <div id="spyGame" class="w400" style="display:none">
@@ -2630,7 +2630,7 @@ function showPremiumManage(){
 async function sbGetOrCreateUser(username, email, provider, providerId){
   // 1. provider_user_id로 조회 (소셜 로그인)
   if(provider && providerId){
-    const byProvider = await sbFetch('users?provider=eq.'+encodeURIComponent(provider)+'&provider_user_id=eq.'+encodeURIComponent(providerId)+'&select=id,username,email,is_premium,premium_until,is_master,xp,avatar&limit=1');
+    const byProvider = await sbFetch('users?provider=eq.'+encodeURIComponent(provider)+'&provider_user_id=eq.'+encodeURIComponent(providerId)+'&select=id,username,email,is_premium,premium_until,is_master,xp,avatar,last_login_date,login_streak&limit=1');
     if(byProvider && byProvider.length > 0) return byProvider[0];
     const created = await sbFetch('users', { method:'POST', body:{ username, provider, provider_user_id: providerId, is_premium: false } });
     return created && created[0] ? created[0] : null;
@@ -2808,6 +2808,7 @@ function loadStats(){
 }
 function saveStats(s){try{localStorage.setItem('wl_stats',JSON.stringify(s));}catch(e){}}
 var stats=loadStats();
+var isApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 var currentStreak=0;
 
 // ── 스트릭 ──
@@ -2912,6 +2913,13 @@ function fallbackCopy(text){
   try{document.execCommand('copy');showCopyToast();}catch(e){}
   document.body.removeChild(el);
 }
+function _josa(name, j1, j2){
+  var c = name.charCodeAt(name.length - 1);
+  if(c >= 0xAC00 && c <= 0xD7A3) return name + ((c - 0xAC00) % 28 > 0 ? j1 : j2);
+  return name + j2;
+}
+
+
 function showShareToast(msg){
   var t=document.getElementById('shareToast');
   if(!t)return;
@@ -3316,6 +3324,10 @@ function checkAttendance(){
   var xpAmount=getStreakXP(streak);
   addXP(xpAmount);
   saveStats(stats);
+  // 서버에 출석 데이터 동기화 (다기기 중복 지급 방지)
+  if(window._sbUserId){
+    sbFetch('users?id=eq.'+window._sbUserId, { method:'PATCH', body:{ last_login_date: today, login_streak: stats.loginStreak } }).catch(function(){});
+  }
 
   // 배너 메시지
   var msg;
@@ -3597,6 +3609,12 @@ function doLogin(provider, providerId){
       if(user.is_master){ isMaster=true; isPremium=true; }
       else if(user.is_premium && user.premium_until && new Date(user.premium_until)>new Date()){ isPremium=true; premiumUntil=user.premium_until; }
       updatePremiumUI();
+      // 서버 출석 데이터로 로컬 덮어쓰기 (다기기 동기화)
+      if(user.last_login_date !== undefined || user.login_streak !== undefined){
+        stats.lastLoginDate = user.last_login_date || '';
+        stats.loginStreak = user.login_streak || 0;
+        saveStats(stats);
+      }
       sbFetch('users?id=eq.'+user.id, { method:'PATCH', body:{ last_seen: new Date().toISOString() } }).catch(function(){});
       sbLoadAndMergeXPByUsername(currentUser);
     }
@@ -3759,10 +3777,7 @@ async function updatePushToggleUI() {
     return;
   }
   try {
-    var reg = await Promise.race([
-      navigator.serviceWorker.ready,
-      new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('timeout')); }, 3000); })
-    ]);
+    var reg = await navigator.serviceWorker.ready;
     var sub = await reg.pushManager.getSubscription();
     btn.textContent = sub ? '켜짐 ✅' : '꺼짐';
   } catch(e) {
@@ -3780,10 +3795,7 @@ async function togglePushNotification() {
     return;
   }
   try {
-    var reg = await Promise.race([
-      navigator.serviceWorker.ready,
-      new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('sw-timeout')); }, 5000); })
-    ]);
+    var reg = await navigator.serviceWorker.ready;
     var sub = await reg.pushManager.getSubscription();
     if (sub) {
       await sub.unsubscribe();
@@ -5581,8 +5593,10 @@ function startBattlePolling(battleIdVal){
             // INSERT/UPDATE: WS 페이로드로 로컬 상태 즉시 반영 (DB 재조회 생략)
             if(rec.username){
               if(rec.status === 'left'){
-                // 퇴장 신호 → 즉시 목록에서 제거
+                // 퇴장 신호 → 즉시 목록에서 제거 + 토스트
+                if(rec.username !== currentUser) showShareToast(_josa(rec.username, '이', '가') + ' 나갔어요');
                 delete battlePlayers[rec.username];
+                // 혼자 남으면 즉시 카운트다운 팝업
               } else {
                 battlePlayers[rec.username] = Object.assign(battlePlayers[rec.username]||{}, rec);
                 // hint_count = 누적 승리 수: _roundScores 즉시 반영
@@ -5752,9 +5766,8 @@ async function onPlayersChange(battleIdVal){
     });
     renderScoreboard(players);
   }
-  // 게임 중 상대가 나간 경우 안내 + consent 재계산
+  // 게임 중 상대가 나간 경우 consent 재계산
   if(isBattleGame && prevCount > 1 && players.length < prevCount){
-    showShareToast('⚠️ 참가자가 파티를 나갔어요');
     if(battleId){
       var newTotal = players.length;
       sbFetch('battles?id=eq.'+battleId+'&select=consent_type,consent_agreed_count&limit=1').then(function(rows){
@@ -5779,28 +5792,7 @@ async function onPlayersChange(battleIdVal){
 
   // ── 빈 방 자동 정리 ──
   if(battleId){
-    var aloneNow = players.length <= 1; // 게임 중이든 대기 중이든
-    var roomEmpty = players.length === 0;
-    if(roomEmpty){
-      // 아무도 없으면 즉시 DB 닫기
-      if(window._emptyRoomTimer){ clearTimeout(window._emptyRoomTimer); window._emptyRoomTimer=null; }
-      sbUpdateBattle(battleId,{status:'closed'}); // 방장 여부 관계없이 처리
-      battleReset();
-    } else if(aloneNow && !window._emptyRoomTimer){
-      // 게임 중이든 대기 중이든 혼자 남음 → 5초 후 자동 종료
-      window._emptyRoomTimer = setTimeout(function(){
-        window._emptyRoomTimer = null;
-        if(battleId && Object.keys(battlePlayers).length <= 1){
-          showShareToast('⚠️ 상대가 나가서 방을 종료해요');
-          sbUpdateBattle(battleId,{status:'closed'});
-          leaveParty();
-        }
-      }, 5000);
-    } else if(!aloneNow && window._emptyRoomTimer){
-      // 새 플레이어 입장 → 타이머 취소
-      clearTimeout(window._emptyRoomTimer);
-      window._emptyRoomTimer = null;
-    }
+    if(window._emptyRoomTimer){ clearTimeout(window._emptyRoomTimer); window._emptyRoomTimer=null; }
   }
 }
 
@@ -6468,12 +6460,12 @@ var rushSavedAt = null;
 var rushStartPerf = 0;
 var RUSH_MAX_FREE = 3;
 var RUSH_MAX_PREMIUM = 6;
-var RUSH_AD_BONUS_MAX = 2;
+var RUSH_AD_BONUS_MAX = 9999;
 var RUSH_DURATION = 60;
 function getRushMaxBase(){ return isPremium ? RUSH_MAX_PREMIUM : RUSH_MAX_FREE; }
 function getRushAdBonusKey(){ var d=new Date(); return 'rush_ad_'+d.getFullYear()+'_'+(d.getMonth()+1)+'_'+d.getDate(); }
 function getRushAdBonusToday(){ return parseInt(localStorage.getItem(getRushAdBonusKey())||'0'); }
-function addRushAdBonus(){ var k=getRushAdBonusKey(); localStorage.setItem(k, getRushAdBonusToday()+1); }
+function addRushAdBonus(){ var k=getRushAdBonusKey(); localStorage.setItem(k, getRushAdBonusToday()+3); }
 function getRushTotalAvailable(){ return isMaster ? 9999 : isGuest ? 0 : RUSH_MAX_FREE + getRushAdBonusToday(); }
 
 function getRushDifficultyToday(){
@@ -6514,7 +6506,7 @@ function enterRushMode(){
   var btn = document.getElementById('rushStartBtn');
   var msg = document.getElementById('rushNoAttemptsMsg');
   var adBtn = document.getElementById('rushAdBonusBtn');
-  var canAdBonus = !isGuest && getRushAdBonusToday() < RUSH_AD_BONUS_MAX;
+  var canAdBonus = isApp && !isGuest;
   if(remaining <= 0){
     if(btn) btn.style.display='none';
     if(msg) msg.style.display='block';
@@ -6873,13 +6865,13 @@ function renderRushResultActions(){
   var used = getRushAttemptsToday();
   var total = getRushTotalAvailable();
   var remaining = total - used;
-  var canAdBonus = !isGuest && getRushAdBonusToday() < RUSH_AD_BONUS_MAX;
+  var canAdBonus = isApp && !isGuest;
   var S = 'font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;padding:13px;border-radius:12px;width:100%';
   var html = '';
   if(remaining > 0){
     html += '<button onclick="retryRush()" style="'+S+';border:1px solid var(--border);background:var(--surface);color:var(--text)">다시 도전 ('+remaining+'회 남음)</button>';
   } else if(canAdBonus){
-    html += '<button onclick="watchAdForRush()" style="'+S+';border:none;background:var(--accent2);color:#fff">광고 보고 +1회 추가</button>';
+    html += '<button onclick="watchAdForRush()" style="'+S+';border:none;background:var(--accent2);color:#fff">광고 보고 +3회 추가</button>';
   }
   html += '<button onclick="closeRushResult()" style="'+S+';border:none;background:var(--primary);color:#fff">홈으로</button>';
   if(isGuest) html += '<button onclick="closeRushResult();doLogout();" style="'+S+';border:1.5px solid var(--primary);background:transparent;color:var(--primary);margin-top:2px">기록 저장하고 로그인하기</button>';
@@ -6906,11 +6898,11 @@ var spyHints = [];
 var spyAnswered = false;
 var SPY_MAX_FREE = 3;
 var SPY_MAX_PREMIUM = 6;
-var SPY_AD_BONUS_MAX = 2;
+var SPY_AD_BONUS_MAX = 9999;
 function getSpyMaxBase(){ return isGuest ? 1 : isPremium ? SPY_MAX_PREMIUM : SPY_MAX_FREE; }
 function getSpyAdBonusKey(){ var d=new Date(); return 'spy_ad_'+d.getFullYear()+'_'+(d.getMonth()+1)+'_'+d.getDate(); }
 function getSpyAdBonusToday(){ return parseInt(localStorage.getItem(getSpyAdBonusKey())||'0'); }
-function addSpyAdBonus(){ var k=getSpyAdBonusKey(); localStorage.setItem(k, getSpyAdBonusToday()+1); }
+function addSpyAdBonus(){ var k=getSpyAdBonusKey(); localStorage.setItem(k, getSpyAdBonusToday()+3); }
 function getSpyTotalAvailable(){ return isMaster ? 9999 : isGuest ? 0 : SPY_MAX_FREE + getSpyAdBonusToday(); }
 function getSpyAttemptsKey(){ var d=new Date(); return 'spy_'+d.getFullYear()+'_'+(d.getMonth()+1)+'_'+d.getDate(); }
 function getSpyAttemptsToday(){ return parseInt(localStorage.getItem(getSpyAttemptsKey())||'0'); }
@@ -6961,7 +6953,7 @@ function _updateSpyLobbyUI(){
   var btn = document.getElementById('spyStartBtn');
   var msg = document.getElementById('spyNoAttemptsMsg');
   var adBtn = document.getElementById('spyAdBonusBtn');
-  var canAdBonus = !isGuest && getSpyAdBonusToday() < SPY_AD_BONUS_MAX;
+  var canAdBonus = isApp && !isGuest;
   if(remaining <= 0){
     if(btn) btn.style.display = 'none';
     if(msg) msg.style.display = 'block';
@@ -7127,7 +7119,7 @@ function renderSpyResultActions(){
   var used = getSpyAttemptsToday();
   var total = getSpyTotalAvailable();
   var remaining = total - used;
-  var canAdBonus = !isGuest && getSpyAdBonusToday() < SPY_AD_BONUS_MAX;
+  var canAdBonus = isApp && !isGuest;
   var hasShareData = !!window._spyShareData;
   var S = 'font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;padding:13px;border-radius:12px;width:100%';
   var html = '';
@@ -7137,7 +7129,7 @@ function renderSpyResultActions(){
   if(remaining > 0){
     html += '<button onclick="retrySpyMode()" style="'+S+';border:1px solid var(--border);background:var(--surface);color:var(--text)">다시 도전 ('+remaining+'회 남음)</button>';
   } else if(canAdBonus){
-    html += '<button onclick="watchAdForSpy()" style="'+S+';border:none;background:#7B30C0;color:#fff">광고 보고 +1회 추가</button>';
+    html += '<button onclick="watchAdForSpy()" style="'+S+';border:none;background:#7B30C0;color:#fff">광고 보고 +3회 추가</button>';
   }
   html += '<button onclick="document.getElementById(\'spyFinalOverlay\').style.display=\'none\';showScreen(\'screenSolo\')" style="'+S+';border:1px solid var(--border);background:var(--surface);color:var(--muted)">나가기</button>';
   if(isGuest){
@@ -7283,7 +7275,7 @@ async function battleReset(){
   battleRoundsPlayed=0; battleCompeteWins=0; battleCoopSolved=0;
   window._partyHintRunning=false; window._partyAnswerRunning=false;
   window._nextRoundRunning=false; window._lastProcessedRound=0; window._solvedProcessedRound=-1;
-  window._countdownRunning=false; window._roundScores={}; window._myVoteDone=false;
+  window._countdownRunning=false; window._roundScores={}; window._myVoteDone=false; window._battleUsedIdx=new Set();
   // 파티 퇴장: 점수/연속 초기화 (다음 세션에 누적값 이월 방지)
   scoreCorrect=0; scoreStreak=0; scoreTotal=0; currentStreak=0;
   updateScoreUI();
@@ -7332,7 +7324,7 @@ async function battleReset(){
   battleDiff='easy'; battleBattleMode='compete';
   window._partyHintRunning=false; window._partyAnswerRunning=false;
   window._nextRoundRunning=false; window._lastProcessedRound=0; window._solvedProcessedRound=-1;
-  window._countdownRunning=false; window._roundScores={};
+  window._countdownRunning=false; window._roundScores={}; window._battleUsedIdx=new Set();
   // 4. 오버레이 닫기
   document.getElementById('battleResultOverlay').className='confirm-overlay';
   document.getElementById('partyVoteOverlay').className='party-vote-overlay';
