@@ -975,8 +975,10 @@ input,button,textarea,select { font-family:inherit; }
     Kakao.init(KAKAO_JS_KEY);
   }
 
-  // ── AdMob 보상형 광고 ID — AdMob 콘솔에서 발급받은 실제 ID로 교체 ──
-  var ADMOB_REWARDED_ID = 'ca-app-pub-8938493055899242/4689268202';
+  // ── AdMob 보상형 광고 ID ──
+  // 테스트 중: Google 공식 테스트 ID (항상 광고 fill됨, 수익 없음)
+  // 프로덕션 출시 시: 'ca-app-pub-8938493055899242/4689268202' 으로 교체
+  var ADMOB_REWARDED_ID = 'ca-app-pub-3940256099942544/5224354917';
 </script>
 </head>
 <body>
@@ -1768,10 +1770,12 @@ input,button,textarea,select { font-family:inherit; }
     <div class="score-item"><div class="s-label">플레이</div><div class="s-val purple" id="scoreTotal">0</div></div>
   </div>
   <!-- 경쟁모드 바 (러쉬모드와 동일 형태) -->
-  <div class="w400" id="competeboard" style="display:none;background:var(--card);border:1.5px solid rgba(107,36,24,0.25);border-radius:14px;padding:10px 16px;margin-bottom:10px;flex-direction:row;align-items:center;justify-content:space-between;">
-    <div style="font-size:0.88rem;color:var(--accent2);font-weight:800;min-width:52px">경쟁모드</div>
-    <div id="competeRoundDisplay" style="font-size:1.8rem;font-weight:800;font-family:var(--font-mono);color:var(--primary);letter-spacing:0.02em">1/5</div>
-    <div id="competeScoreDisplay" style="font-size:1.4rem;font-weight:800;color:var(--accent2);min-width:52px;text-align:right">0승</div>
+  <div class="w400" id="competeboard" style="display:none;background:var(--card);border:1.5px solid rgba(107,36,24,0.25);border-radius:14px;padding:10px 14px;margin-bottom:10px;flex-direction:column;gap:6px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:0.78rem;color:var(--accent2);font-weight:800;">경쟁모드</div>
+      <div id="competeRoundDisplay" style="font-size:0.78rem;font-weight:700;color:var(--muted);">1/5</div>
+    </div>
+    <div id="competePlayerRows" style="display:flex;flex-direction:column;gap:4px;"></div>
   </div>
   <div class="w400 game-card">
     <div class="round-row">
@@ -4501,8 +4505,9 @@ async function showAd(type){
       });
       await AdMob.showRewardVideoAd();
     } catch(e){
-      // 광고 로드 실패 시 콜백 그냥 실행
-      if(adCallback){ adCallback(); adCallback=null; }
+      console.warn('AdMob 광고 로드 실패:', e);
+      showShareToast('광고를 불러오지 못했어요. 잠시 후 다시 시도해주세요.');
+      adCallback = null;
     }
     return;
   }
@@ -5758,23 +5763,27 @@ async function onPlayersChange(battleIdVal){
 
   // ── 빈 방 자동 정리 ──
   if(battleId){
-    var aloneInGame = isBattleGame && players.length <= 1;
-    var roomEmpty   = players.length === 0;
+    var aloneNow = players.length <= 1; // 게임 중이든 대기 중이든
+    var roomEmpty = players.length === 0;
     if(roomEmpty){
       // 아무도 없으면 즉시 DB 닫기
       if(window._emptyRoomTimer){ clearTimeout(window._emptyRoomTimer); window._emptyRoomTimer=null; }
-      if(battleIsCreator) sbUpdateBattle(battleId,{status:'closed'});
+      sbUpdateBattle(battleId,{status:'closed'}); // 방장 여부 관계없이 처리
       battleReset();
-    } else if(aloneInGame && !window._emptyRoomTimer){
-      // 게임 중 혼자 남음 → 5초 후 자동 종료 (하트비트 좀비감지와 중복 방지)
+    } else if(aloneNow && !window._emptyRoomTimer){
+      // 게임 중이든 대기 중이든 혼자 남음 → 5초 후 자동 종료
       window._emptyRoomTimer = setTimeout(function(){
         window._emptyRoomTimer = null;
         if(battleId && Object.keys(battlePlayers).length <= 1){
-          showShareToast('⚠️ 상대가 나가서 게임을 종료해요');
-          if(battleIsCreator) sbUpdateBattle(battleId,{status:'closed'});
+          showShareToast('⚠️ 상대가 나가서 방을 종료해요');
+          sbUpdateBattle(battleId,{status:'closed'});
           leaveParty();
         }
       }, 5000);
+    } else if(!aloneNow && window._emptyRoomTimer){
+      // 새 플레이어 입장 → 타이머 취소
+      clearTimeout(window._emptyRoomTimer);
+      window._emptyRoomTimer = null;
     }
   }
 }
@@ -5785,11 +5794,25 @@ function renderScoreboard(players){
   if(!isBattleGame || battleBattleMode!=='compete'){ board.style.display='none'; return; }
   board.style.display='flex';
   if(!window._roundScores) window._roundScores = {};
-  var myScore = window._roundScores[currentUser] || 0;
   var rd = document.getElementById('competeRoundDisplay');
-  var sd = document.getElementById('competeScoreDisplay');
   if(rd) rd.textContent = round + '/' + battleMaxRounds;
-  if(sd) sd.textContent = myScore + '승';
+  var rows = document.getElementById('competePlayerRows');
+  if(!rows) return;
+  var sorted = (players||[]).slice().sort(function(a,b){
+    var sa = window._roundScores[a.username]||0;
+    var sb2 = window._roundScores[b.username]||0;
+    return sb2 - sa;
+  });
+  rows.innerHTML = sorted.map(function(p){
+    var score = window._roundScores[p.username] || 0;
+    var isMe = p.username === currentUser;
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid var(--border);font-size:0.82rem;">'
+      + '<span style="font-weight:'+(isMe?'800':'500')+';color:'+(isMe?'var(--primary)':'var(--text)')+';max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
+      + escHtml(p.username) + (isMe?' 👑':'')
+      + '</span>'
+      + '<span style="font-weight:700;color:var(--accent2);min-width:36px;text-align:right;">' + score + '승</span>'
+      + '</div>';
+  }).join('');
 }
 
 // 힌트 동기화 - DOM 기준으로만 판단
@@ -7973,13 +7996,13 @@ function _launchBattleGame(){
       document.getElementById('skipRoundBtn').style.display='none';
       document.getElementById('moreHintBtn').style.display='none';
     } else {
-      // 경쟁: 입력창만 표시
+      // 경쟁: 입력창만 표시, 힌트/정답/넘어가기는 방장만
       var gameInputWrap2=document.getElementById('gameInputWrap');
       if(gameInputWrap2) gameInputWrap2.style.display='';
       document.getElementById('answerInput').disabled=false;
-      document.getElementById('giveUpBtn').style.display='';
+      document.getElementById('giveUpBtn').style.display='none';
       document.getElementById('skipRoundBtn').style.display='none';
-      document.getElementById('moreHintBtn').style.display='';
+      document.getElementById('moreHintBtn').style.display='none';
       document.getElementById('answerInput').focus();
     }
     // 참가자 캐치업: WS 이벤트가 카운트다운 중 도착해서 isBattleGame=false로 무시됐을 경우 대비
@@ -8883,7 +8906,7 @@ async function shareCrowdResult() {
   if(!window.Capacitor || !window.Capacitor.isNativePlatform || !window.Capacitor.isNativePlatform()) return;
   try {
     var { AdMob } = await import('@capacitor-community/admob');
-    await AdMob.initialize({ testingDevices: [], initializeForTesting: false });
+    await AdMob.initialize({ testingDevices: [], initializeForTesting: true });
   } catch(e){ console.warn('AdMob init failed', e); }
 })();
 </script>
