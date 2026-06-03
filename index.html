@@ -7996,6 +7996,8 @@ function _launchBattleGame(){
   diffPill.textContent=battleDiff.toUpperCase(); diffPill.className='diff-pill '+battleDiff;
 
   if(battleIsCreator){
+    document.getElementById('giveUpBtn').style.display='';
+    document.getElementById('skipRoundBtn').style.display='';
     // 방장: DEFAULT_HINTS[diff]개 순차 표시 (연습/랭크모드와 동일)
     var defaultHintCount = DEFAULT_HINTS[battleDiff] || 6;
     var initialHints=Math.min(defaultHintCount, currentHints.length);
