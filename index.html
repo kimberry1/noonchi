@@ -4478,7 +4478,7 @@ function _doRevealAnswer(){
   document.getElementById('giveUpBtn').disabled=true;
   document.getElementById('skipRoundBtn').disabled=true;
   document.getElementById('moreHintBtn').className='more-hint-btn';
-  document.getElementById('nextBtn').classList.add('show');
+  if(!isBattleGame || battleIsCreator) document.getElementById('nextBtn').classList.add('show');
   var swb=document.getElementById('saveWrongNoteBtn');
   if(swb){ swb.style.background='#FFE5DC'; swb.style.borderColor='var(--accent2)'; swb.style.color='var(--accent2)'; }
 }
@@ -6340,7 +6340,7 @@ function _revealAnswer(){
   document.getElementById('giveUpBtn').disabled=true;
   document.getElementById('skipRoundBtn').disabled=true;
   document.getElementById('moreHintBtn').className='more-hint-btn';
-  document.getElementById('nextBtn').classList.add('show');
+  if(!isBattleGame || battleIsCreator) document.getElementById('nextBtn').classList.add('show');
   // 자동 저장 제거 → 다시풀기 버튼 클릭으로만 저장
   var swb2=document.getElementById('saveWrongNoteBtn');
   if(swb2){ swb2.style.background='#FFE5DC'; swb2.style.borderColor='var(--accent2)'; swb2.style.color='var(--accent2)'; }
