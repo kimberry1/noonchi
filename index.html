@@ -5374,6 +5374,17 @@ function sbRealtimeConnect(battleIdVal, onUpdate){
   return ws;
 }
 
+// ── Broadcast 발신 헬퍼 ──
+function sendBattleBroadcast(event, payload){
+  if(!battleWs || battleWs.readyState !== WebSocket.OPEN || !battleId) return;
+  battleWs.send(JSON.stringify({
+    topic: 'realtime:battle_bc:' + battleId,
+    event: 'broadcast',
+    payload: { type: 'broadcast', event: event, payload: payload },
+    ref: null
+  }));
+}
+
 // ── 대결방 생성 ──
 async function sbCreateBattle(code, diff, mode, wordIdx){
   const data = await sbFetch('battles', {
@@ -5557,6 +5568,22 @@ function startBattlePolling(battleIdVal){
         var bp = msg.payload;
         if(bp && bp.event === 'compete_solved' && bp.payload){
           onBroadcastSolved(bp.payload);
+        }
+        if(bp && bp.event === 'next_question' && bp.payload && !battleIsCreator){
+          var _np = bp.payload;
+          if(_np.word_idx !== undefined && _np.word_idx >= 0) battleWordIdx = _np.word_idx;
+          if(_np.diff) battleDiff = _np.diff;
+          var _nr = _np.round || 0;
+          if(_nr > (window._lastProcessedRound || 0)){
+            round = _nr;
+            gameOver = false;
+            isBattleGame = true;
+            document.getElementById('battleResultOverlay').className = 'confirm-overlay';
+            startRound();
+          }
+        }
+        if(bp && bp.event === 'game_start' && !battleIsCreator && !isBattleGame && battleId){
+          startCountdown(function(){ _launchBattleGame(); });
         }
         return;
       }
@@ -6296,6 +6323,7 @@ function executeConsentAction(type){
         consent_rejected: false,
         consent_total: 0
       }).then(function(){
+        sendBattleBroadcast('next_question', { word_idx: newWordIdx, round: round, diff: effDiff });
         startRound(); // 방장 실행
       });
     }
@@ -7805,6 +7833,7 @@ async function hostStartBattle(){
   var allReady=nonHost.every(function(p){return p.status==='ready';});
   if(!allReady){showShareToast('⚠️ 아직 준비 안 된 친구가 있어요.');return;}
   await sbUpdateBattle(battleId,{status:'playing'});
+  sendBattleBroadcast('game_start', {});
   // 게임 시작 → 코드 복사/초대 버튼 숨김 (중간 입장 차단)
   var codeBtn=document.querySelector('[onclick*="copyBattleCode"]');
   if(codeBtn) codeBtn.style.display='none';
