@@ -4213,24 +4213,27 @@ function pickHints(item, diff){
   var h1 = item.hints_1st ? [...item.hints_1st] : (item.hints ? [...item.hints] : []);
   var h2 = item.hints_2nd ? [...item.hints_2nd] : [];
   if(h2.length === 0 && h1.length > 3){ var mid=Math.ceil(h1.length/2); h2=h1.slice(mid); h1=h1.slice(0,mid); }
+  var fullPool = h1.concat(h2);
   function shuffle(arr){ for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t;} return arr; }
-  window.currentHintsAll = h1.concat(h2);
+  var selected;
   if(diff === 'easy'){
     shuffle(h1); shuffle(h2);
-    return h1.slice(0,5).concat(h2.slice(0,1));
+    selected = h1.slice(0,5).concat(h2.slice(0,1));
   } else if(diff === 'normal'){
     shuffle(h1); shuffle(h2);
-    return h1.slice(0,4).concat(h2.slice(0,2));
+    selected = h1.slice(0,4).concat(h2.slice(0,2));
   } else if(diff === 'hard'){
     shuffle(h1); shuffle(h2);
-    var m = h1.slice(0,3).concat(h2.slice(0,3)); shuffle(m); return m;
+    var m = h1.slice(0,3).concat(h2.slice(0,3)); shuffle(m); selected = m;
   } else if(diff === 'insane'){
     shuffle(h1); shuffle(h2);
-    var mi = h1.slice(0,1).concat(h2.slice(0,5)); shuffle(mi); return mi;
+    var mi = h1.slice(0,1).concat(h2.slice(0,5)); shuffle(mi); selected = mi;
   } else {
     shuffle(h1); shuffle(h2);
-    var m2 = h1.slice(0,2).concat(h2.slice(0,4)); shuffle(m2); return m2;
+    var m2 = h1.slice(0,2).concat(h2.slice(0,4)); shuffle(m2); selected = m2;
   }
+  window.currentHintsAll = selected.concat(fullPool.filter(function(h){ return selected.indexOf(h) === -1; }));
+  return selected;
 }
 
 // 파티모드 전용: battleId+wordIdx 시드로 결정론적 셔플 → 모든 참가자 동일 힌트 순서
@@ -4244,26 +4247,29 @@ function seededPickHints(item, diff, seed){
   var h1 = item.hints_1st ? [...item.hints_1st] : (item.hints ? [...item.hints] : []);
   var h2 = item.hints_2nd ? [...item.hints_2nd] : [];
   if(h2.length === 0 && h1.length > 3){ var mid=Math.ceil(h1.length/2); h2=h1.slice(mid); h1=h1.slice(0,mid); }
+  var fullPool = h1.concat(h2);
   var s = seed >>> 0;
   function rand(){ s = (s ^ (s << 13)) >>> 0; s = (s ^ (s >>> 17)) >>> 0; s = (s ^ (s << 5)) >>> 0; return s / 4294967296; }
   function shuffle(arr){ for(var i=arr.length-1;i>0;i--){var j=Math.floor(rand()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t;} return arr; }
-  window.currentHintsAll = h1.concat(h2);
+  var selected;
   if(diff === 'easy'){
     shuffle(h1); shuffle(h2);
-    return h1.slice(0,5).concat(h2.slice(0,1));
+    selected = h1.slice(0,5).concat(h2.slice(0,1));
   } else if(diff === 'normal'){
     shuffle(h1); shuffle(h2);
-    return h1.slice(0,4).concat(h2.slice(0,2));
+    selected = h1.slice(0,4).concat(h2.slice(0,2));
   } else if(diff === 'hard'){
     shuffle(h1); shuffle(h2);
-    var m = h1.slice(0,3).concat(h2.slice(0,3)); shuffle(m); return m;
+    var m = h1.slice(0,3).concat(h2.slice(0,3)); shuffle(m); selected = m;
   } else if(diff === 'insane'){
     shuffle(h1); shuffle(h2);
-    var mi = h1.slice(0,1).concat(h2.slice(0,5)); shuffle(mi); return mi;
+    var mi = h1.slice(0,1).concat(h2.slice(0,5)); shuffle(mi); selected = mi;
   } else {
     shuffle(h1); shuffle(h2);
-    var m2 = h1.slice(0,2).concat(h2.slice(0,4)); shuffle(m2); return m2;
+    var m2 = h1.slice(0,2).concat(h2.slice(0,4)); shuffle(m2); selected = m2;
   }
+  window.currentHintsAll = selected.concat(fullPool.filter(function(h){ return selected.indexOf(h) === -1; }));
+  return selected;
 }
 
 
