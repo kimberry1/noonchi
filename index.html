@@ -5761,13 +5761,15 @@ function onBattleChange(battle){
     console.log('[경쟁] 시작 시간 동기화. 서버 시각까지:', serverStart - Date.now(), 'ms');
   }
 
-  // 7. 방장 힌트 공개 신호 (비방장) — Broadcast가 먼저 처리했으면 스킵
+  // 7. 방장 힌트 공개 신호 (비방장) — Broadcast가 먼저 처리했으면 스킵 + 이전 라운드 stale 이벤트 차단
   if(!battleIsCreator && isBattleGame && !window._partyHintRunning){
     var serverCount = battle.current_hint_count || 0;
+    var _hintEventRound = battle.current_round || 0;
+    var _isCurrentRoundHint = (_hintEventRound === 0) || (_hintEventRound === round);
     var _hKeyDb = 'hint_'+round+'_'+serverCount;
     var _hintAlreadyByBc = window._bcHandled && window._bcHandled[_hKeyDb];
     var domCount = document.getElementById('hintsArea') ? document.getElementById('hintsArea').children.length : 0;
-    if(!_hintAlreadyByBc && serverCount > domCount){
+    if(_isCurrentRoundHint && !_hintAlreadyByBc && serverCount > domCount){
       _syncHints(serverCount);
     }
   }
