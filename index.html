@@ -5560,27 +5560,40 @@ function startBattlePolling(battleIdVal){
         }
         // 힌트 공개 broadcast
         if(bp && bp.event === 'bc_hint' && bp.payload && !battleIsCreator && isBattleGame){
-          if(!window._partyHintRunning) _syncHints(bp.payload.hint_count);
+          if(!window._bcHandled) window._bcHandled = {};
+          var _hKey = 'hint_'+round+'_'+bp.payload.hint_count;
+          if(!window._bcHandled[_hKey]){
+            window._bcHandled[_hKey] = true;
+            if(!window._partyHintRunning) _syncHints(bp.payload.hint_count);
+          }
         }
         // 정답 공개 broadcast
         if(bp && bp.event === 'bc_answer' && bp.payload && !battleIsCreator && isBattleGame){
-          if(!gameOver && !window._partyAnswerRunning){
-            window._partyAnswerRunning = true;
-            adCallback = function(){ _revealAnswer(); window._partyAnswerRunning = false; };
-            showAd('answer');
+          if(!window._bcHandled) window._bcHandled = {};
+          if(!window._bcHandled['answer_'+round]){
+            window._bcHandled['answer_'+round] = true;
+            if(!gameOver && !window._partyAnswerRunning){
+              window._partyAnswerRunning = true;
+              adCallback = function(){ _revealAnswer(); window._partyAnswerRunning = false; };
+              showAd('answer');
+            }
           }
         }
         // 다음 문제 broadcast
         if(bp && bp.event === 'bc_next' && bp.payload && !battleIsCreator){
+          if(!window._bcHandled) window._bcHandled = {};
           var _bnd = bp.payload;
-          if(_bnd.word_idx !== undefined && _bnd.word_idx >= 0) battleWordIdx = _bnd.word_idx;
-          if(_bnd.diff) battleDiff = _bnd.diff;
-          if(_bnd.round > (window._lastProcessedRound || 0)){
-            round = _bnd.round;
-            gameOver = false;
-            isBattleGame = true;
-            document.getElementById('battleResultOverlay').className = 'confirm-overlay';
-            startRound();
+          if(!window._bcHandled['next_'+_bnd.round]){
+            window._bcHandled['next_'+_bnd.round] = true;
+            if(_bnd.word_idx !== undefined && _bnd.word_idx >= 0) battleWordIdx = _bnd.word_idx;
+            if(_bnd.diff) battleDiff = _bnd.diff;
+            if(_bnd.round > (window._lastProcessedRound || 0)){
+              round = _bnd.round;
+              gameOver = false;
+              isBattleGame = true;
+              document.getElementById('battleResultOverlay').className = 'confirm-overlay';
+              startRound();
+            }
           }
         }
         return;
@@ -5701,20 +5714,20 @@ function onBattleChange(battle){
     return;
   }
 
-  // 4. 다음 문제 (비방장) — 새 라운드일 때만 처리 (stale next_request 재발화 방지)
+  // 4. 다음 문제 (비방장) — Broadcast가 먼저 처리했으면 스킵
   if(battle.next_request && !battleIsCreator){
     var incomingRound = battle.current_round || 0;
     if(battle.word_idx !== undefined && battle.word_idx >= 0) battleWordIdx = battle.word_idx;
-    if(battle.diff) battleDiff = battle.diff; // 방장이 해소한 난이도(random→실제)를 참가자에 반영
-    if(incomingRound > window._lastProcessedRound){
+    if(battle.diff) battleDiff = battle.diff;
+    var _alreadyByBc = window._bcHandled && window._bcHandled['next_'+incomingRound];
+    if(!_alreadyByBc && incomingRound > window._lastProcessedRound){
       round = incomingRound;
-      console.log('[참가자 next] round:', round, 'wordIdx:', battleWordIdx, 'diff:', battleDiff);
+      console.log('[참가자 next DB폴백] round:', round, 'wordIdx:', battleWordIdx, 'diff:', battleDiff);
       gameOver = false;
       isBattleGame = true;
       document.getElementById('battleResultOverlay').className='confirm-overlay';
       startRound();
     }
-    // incomingRound <= _lastProcessedRound: 같은 라운드의 다른 WS 이벤트 — gameOver 건드리지 않음
   }
 
   if(!isBattleGame) return;
@@ -5742,19 +5755,22 @@ function onBattleChange(battle){
     console.log('[경쟁] 시작 시간 동기화. 서버 시각까지:', serverStart - Date.now(), 'ms');
   }
 
-  // 7. 방장 힌트 공개 신호 (비방장) - 광고 없이 바로 힌트
+  // 7. 방장 힌트 공개 신호 (비방장) — Broadcast가 먼저 처리했으면 스킵
   if(!battleIsCreator && isBattleGame && !window._partyHintRunning){
     var serverCount = battle.current_hint_count || 0;
+    var _hKeyDb = 'hint_'+round+'_'+serverCount;
+    var _hintAlreadyByBc = window._bcHandled && window._bcHandled[_hKeyDb];
     var domCount = document.getElementById('hintsArea') ? document.getElementById('hintsArea').children.length : 0;
-    if(serverCount > domCount){
+    if(!_hintAlreadyByBc && serverCount > domCount){
       _syncHints(serverCount);
     }
   }
 
-  // 7. 정답 공개 신호 (비방장) - 현재 라운드 것만 처리
+  // 8. 정답 공개 신호 (비방장) — Broadcast가 먼저 처리했으면 스킵
   var _answerRound = battle.current_round || 0;
   var _isCurrentRound = (_answerRound === 0) || (_answerRound === round);
-  if(!battleIsCreator && battle.answer_request && !gameOver && !window._partyAnswerRunning && _isCurrentRound){
+  var _answerAlreadyByBc = window._bcHandled && window._bcHandled['answer_'+round];
+  if(!battleIsCreator && battle.answer_request && !gameOver && !window._partyAnswerRunning && _isCurrentRound && !_answerAlreadyByBc){
     window._partyAnswerRunning=true;
     adCallback=function(){
       _revealAnswer();
@@ -7305,7 +7321,7 @@ async function battleReset(){
   battleRoundsPlayed=0; battleCompeteWins=0; battleCoopSolved=0;
   window._partyHintRunning=false; window._partyAnswerRunning=false;
   window._nextRoundRunning=false; window._lastProcessedRound=0; window._solvedProcessedRound=-1;
-  window._countdownRunning=false; window._roundScores={}; window._myVoteDone=false; window._battleUsedIdx=new Set();
+  window._countdownRunning=false; window._roundScores={}; window._myVoteDone=false; window._battleUsedIdx=new Set(); window._bcHandled={};
   // 파티 퇴장: 점수/연속 초기화 (다음 세션에 누적값 이월 방지)
   scoreCorrect=0; scoreStreak=0; scoreTotal=0; currentStreak=0;
   updateScoreUI();
@@ -7354,7 +7370,7 @@ async function battleReset(){
   battleDiff='easy'; battleBattleMode='compete';
   window._partyHintRunning=false; window._partyAnswerRunning=false;
   window._nextRoundRunning=false; window._lastProcessedRound=0; window._solvedProcessedRound=-1;
-  window._countdownRunning=false; window._roundScores={}; window._battleUsedIdx=new Set();
+  window._countdownRunning=false; window._roundScores={}; window._battleUsedIdx=new Set(); window._bcHandled={};
   // 4. 오버레이 닫기
   document.getElementById('battleResultOverlay').className='confirm-overlay';
   document.getElementById('partyVoteOverlay').className='party-vote-overlay';
@@ -7989,7 +8005,7 @@ function _launchBattleGame(){
   scoreCorrect=0; scoreStreak=0; scoreTotal=0; currentStreak=0;
   updateScoreUI();
   window._partyHintRunning=false; window._partyAnswerRunning=false; window._nextRoundRunning=false; window._lastProcessedRound=0; window._resultShowing=false; window._solvedProcessedRound=-1;
-  window._roundScores={}; // 전광판 스코어 초기화
+  window._roundScores={}; window._bcHandled={};
   window._battleUsedIdx = new Set([battleWordIdx]); // 중복 문제 방지
   showScreen('screenGame');
   // 경쟁모드: 스코어바 숨김, 전광판 표시
