@@ -5582,8 +5582,20 @@ function startBattlePolling(battleIdVal){
             startRound();
           }
         }
-        if(bp && bp.event === 'game_start' && !battleIsCreator && !isBattleGame && battleId){
+        if(bp && bp.event === 'game_start' && !battleIsCreator && !isBattleGame && !window._countdownRunning && battleId){
+          var _gsp = bp.payload;
+          if(_gsp && _gsp.word_idx !== undefined && _gsp.word_idx >= 0) battleWordIdx = _gsp.word_idx;
+          if(_gsp && _gsp.diff) battleDiff = _gsp.diff;
           startCountdown(function(){ _launchBattleGame(); });
+        }
+        if(bp && bp.event === 'consent_done' && bp.payload && battleIsCreator && battleId){
+          var _ctype = bp.payload.type;
+          if(_ctype){
+            document.getElementById('partyVoteOverlay').className='party-vote-overlay';
+            _restoreVoteBtns();
+            sbUpdateBattle(battleId,{consent_type:null,consent_agreed_count:0,consent_rejected:false,consent_total:0});
+            executeConsentAction(_ctype);
+          }
         }
         return;
       }
@@ -5697,8 +5709,8 @@ function onBattleChange(battle){
     // return 제거 - next_request도 함께 처리 가능하도록
   }
 
-  // 2. 게임 시작 (비방장)
-  if(battle.status==='playing' && !isBattleGame && !battleIsCreator && battleId){
+  // 2. 게임 시작 (비방장) — broadcast로 이미 시작됐을 수 있으므로 _countdownRunning 체크
+  if(battle.status==='playing' && !isBattleGame && !battleIsCreator && !window._countdownRunning && battleId){
     startCountdown(function(){ _launchBattleGame(); });
     return;
   }
@@ -5856,11 +5868,15 @@ function _syncHints(targetCount){
   var area = document.getElementById('hintsArea');
   var existing = area ? area.children.length : 0;
   if(targetCount <= existing) return;
-  // 1~6번: seeded currentHints(방장과 동일 순서), 7번 이후: currentHintsAll(광고 추가 힌트)
   var seeded = currentHints || [];
   var full = window.currentHintsAll || seeded;
-  function getHint(i){ return i < seeded.length ? seeded[i] : full[i]; }
-  var safeTarget = Math.min(targetCount, full.length);
+  // seeded에 이미 포함된 힌트는 extras에서 제외 (중복 방지)
+  var seededSet = {};
+  seeded.forEach(function(h){ seededSet[h] = true; });
+  var extras = full.filter(function(h){ return !seededSet[h]; });
+  var combined = seeded.concat(extras);
+  function getHint(i){ return combined[i]; }
+  var safeTarget = Math.min(targetCount, combined.length);
   if(safeTarget <= existing) return;
   window._partyHintRunning = true;
   var idx = existing;
@@ -6202,8 +6218,11 @@ async function submitPartyVote(agreed){
   if(newCount >= realTotal){
     document.getElementById('partyVoteOverlay').className='party-vote-overlay';
     _restoreVoteBtns();
-    if(type !== 'next' || battleIsCreator){
+    if(battleIsCreator){
       executeConsentAction(type);
+    } else {
+      // broadcast로 방장에게 즉시 신호 (postgres_changes 경유 시 race condition 방지)
+      sendBattleBroadcast('consent_done', { type: type });
     }
   }
 }
@@ -6310,6 +6329,7 @@ function executeConsentAction(type){
       window._battleUsedIdx.add(newWordIdx);
       battleWordIdx=newWordIdx;
       round++;
+      sendBattleBroadcast('next_question', { word_idx: newWordIdx, round: round, diff: effDiff });
       sbUpdateBattle(battleId,{
         word_idx: newWordIdx,
         diff: effDiff,          // 해소된 난이도 참가자에게 전달
@@ -6323,7 +6343,6 @@ function executeConsentAction(type){
         consent_rejected: false,
         consent_total: 0
       }).then(function(){
-        sendBattleBroadcast('next_question', { word_idx: newWordIdx, round: round, diff: effDiff });
         startRound(); // 방장 실행
       });
     }
@@ -7832,8 +7851,8 @@ async function hostStartBattle(){
   if(nonHost.length===0){showShareToast('⚠️ 참가자가 없어요.');return;}
   var allReady=nonHost.every(function(p){return p.status==='ready';});
   if(!allReady){showShareToast('⚠️ 아직 준비 안 된 친구가 있어요.');return;}
+  sendBattleBroadcast('game_start', { word_idx: battleWordIdx, diff: battleDiff });
   await sbUpdateBattle(battleId,{status:'playing'});
-  sendBattleBroadcast('game_start', {});
   // 게임 시작 → 코드 복사/초대 버튼 숨김 (중간 입장 차단)
   var codeBtn=document.querySelector('[onclick*="copyBattleCode"]');
   if(codeBtn) codeBtn.style.display='none';
