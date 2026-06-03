@@ -8303,22 +8303,7 @@ function finishOnboarding(){
   showScreen('screenLogin');
 }
 function maybeShowOnboarding(){
-  var seen = false;
-  try { seen = localStorage.getItem('noonchi_onboarded') === '1'; } catch(e){}
-  // 이미 플레이 기록이 있으면 (기존 유저) 온보딩 스킵
-  var hasPlayHistory = false;
-  try {
-    var s = JSON.parse(localStorage.getItem('wl_stats') || '{}');
-    hasPlayHistory = (s.totalGames || 0) > 0;
-  } catch(e){}
-  if(!seen && !hasPlayHistory){
-    try { localStorage.setItem('noonchi_onboarded', '1'); } catch(e){}
-    showScreen('screenOnboarding');
-    onboardGoTo(0);
-  } else if(!seen && hasPlayHistory){
-    // 기존 유저는 자동으로 본 것 처리
-    try { localStorage.setItem('noonchi_onboarded', '1'); } catch(e){}
-  }
+  try { localStorage.setItem('noonchi_onboarded', '1'); } catch(e){}
 }
 
 // ══════════════════════════════════════════
