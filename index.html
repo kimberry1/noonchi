@@ -653,105 +653,8 @@ input,button,textarea,select { font-family:inherit; }
 .vote-no { flex:1; padding:12px; border-radius:11px; border:1px solid var(--border); background:var(--surface); color:var(--text-soft); font-family:inherit; font-size:0.88rem; font-weight:600; cursor:pointer; }
 
 
-/* ═══════════ 온보딩 ═══════════ */
-.onboard-shell { display:flex; flex-direction:column; align-items:center; padding:0; flex:1; width:100%; max-width:400px; }
-.onboard-top { width:100%; display:flex; justify-content:flex-end; padding:0 4px 4px; min-height:34px; }
-.onboard-skip { background:none; border:none; color:var(--muted); font-family:inherit; font-size:0.86rem; font-weight:600; padding:8px 12px; cursor:pointer; border-radius:8px; }
-.onboard-skip:hover { color:var(--text); background:var(--surface); }
-.onboard-stage { width:100%; overflow:hidden; flex:1; display:flex; align-items:center; }
-.onboard-track { display:flex; width:500%; transition:transform 0.45s cubic-bezier(.2,.7,.3,1); }
-.onboard-slide { flex:0 0 20%; padding:0 4px; display:flex; flex-direction:column; align-items:center; text-align:center; }
-.onboard-visual { width:100%; min-height:260px; display:flex; align-items:center; justify-content:center; padding:24px 0; }
-.onboard-title { font-family:var(--font-body); font-weight:800; font-size:1.5rem; color:var(--text); letter-spacing:-0.02em; margin-bottom:10px; padding:0 12px; }
-.onboard-body { font-size:0.94rem; color:var(--text-soft); line-height:1.7; padding:0 16px; max-width:340px; }
-.onboard-dots { display:flex; gap:6px; justify-content:center; margin:24px 0 16px; }
-.onboard-dot { width:7px; height:7px; border-radius:50%; background:var(--border-strong); transition:all 0.25s ease; }
-.onboard-dot.active { background:var(--primary); width:22px; border-radius:6px; }
-.onboard-actions { display:flex; gap:10px; width:100%; padding:0 4px 12px; }
-.onboard-prev { background:var(--card); border:1px solid var(--border); color:var(--text-soft); font-family:inherit; font-size:0.92rem; font-weight:600; padding:14px 22px; border-radius:14px; cursor:pointer; transition:all 0.15s; }
-.onboard-prev:hover { background:var(--surface); }
-.onboard-prev:disabled { opacity:0; pointer-events:none; }
-.onboard-next { flex:1; background:var(--primary); border:none; color:#fff; font-family:inherit; font-size:1rem; font-weight:700; padding:14px; border-radius:14px; cursor:pointer; transition:all 0.18s; box-shadow:var(--shadow-sm); }
-.onboard-next:hover { background:var(--primary-deep); transform:translateY(-1px); box-shadow:var(--shadow-md); }
 
 /* Slide 1 — 인트로 로고 */
-.onb-hero-logo { font-family:var(--font-display); font-size:3.4rem; font-weight:700; color:var(--primary); letter-spacing:-0.04em; display:inline-flex; align-items:center; gap:0; }
-
-/* Slide 2 — 힌트 예시 */
-.onb-hints { display:flex; flex-direction:column; gap:10px; width:100%; max-width:280px; }
-.onb-hint-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
-.onb-hint-num { width:26px; height:26px; border-radius:50%; background:var(--success-bg); color:var(--success); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.78rem; flex-shrink:0; }
-.onb-hint-text { font-size:1rem; font-weight:700; color:var(--text); text-align:left; }
-.onb-answer { margin-top:8px; padding:14px 22px; background:var(--primary-soft); border:2px dashed var(--primary); border-radius:14px; font-family:var(--font-display); font-weight:700; font-size:1.5rem; color:var(--primary); font-style:italic; }
-
-/* Slide 3 — 난이도 */
-.onb-diff-list { display:flex; flex-direction:column; gap:8px; width:100%; max-width:280px; }
-.onb-diff-row { display:flex; align-items:center; gap:12px; padding:11px 16px; border-radius:13px; background:var(--card); border:1px solid var(--border); }
-.onb-diff-emoji { font-size:1.3rem; }
-.onb-diff-name { flex:1; text-align:left; font-weight:700; font-size:0.94rem; color:var(--text); }
-.onb-diff-rate { font-size:0.74rem; color:var(--muted); font-weight:500; }
-
-/* Slide 4 — 파티모드 */
-.onb-party { display:flex; align-items:center; gap:18px; }
-.onb-party-player { display:flex; flex-direction:column; align-items:center; gap:8px; }
-.onb-party-avatar { width:72px; height:72px; border-radius:50%; background:var(--primary-soft); border:3px solid var(--primary); display:flex; align-items:center; justify-content:center; font-size:2.4rem; }
-.onb-party-avatar.opp { background:#FFE5DC; border-color:var(--accent2); }
-.onb-party-name { font-weight:700; font-size:0.85rem; color:var(--text); }
-.onb-party-vs { font-family:var(--font-display); font-weight:700; font-size:2rem; color:var(--accent2); font-style:italic; }
-
-/* Slide 5 — 레벨/미션 */
-.onb-grow { display:flex; flex-direction:column; gap:14px; width:100%; max-width:280px; }
-.onb-xp-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 16px; box-shadow:var(--shadow-sm); }
-.onb-xp-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-.onb-xp-lv { font-weight:800; font-size:0.94rem; color:var(--primary); }
-.onb-xp-pts { font-size:0.76rem; color:var(--muted); }
-.onb-xp-bar { height:8px; background:var(--surface); border-radius:8px; overflow:hidden; }
-.onb-xp-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--primary),var(--accent2)); border-radius:8px; }
-.onb-mission-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:12px; box-shadow:var(--shadow-sm); }
-.onb-mission-card.done { border-color:#BFE5CC; background:var(--success-bg); }
-.onb-mission-icon { font-size:1.3rem; }
-.onb-mission-text { flex:1; text-align:left; font-size:0.86rem; font-weight:600; color:var(--text); }
-.onb-mission-xp { font-size:0.72rem; font-weight:700; color:var(--warn); }
-
-/* ── 온보딩 슬라이드 진입 애니메이션 ── */
-@keyframes onbLogoBounce { 0%{opacity:0;transform:scale(0.55)} 65%{transform:scale(1.1)} 100%{opacity:1;transform:scale(1)} }
-@keyframes onbFlyUp      { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-@keyframes onbFlyLeft    { from{opacity:0;transform:translateX(-36px)} to{opacity:1;transform:translateX(0)} }
-@keyframes onbFlyRight   { from{opacity:0;transform:translateX(36px)}  to{opacity:1;transform:translateX(0)} }
-@keyframes onbPop        { 0%{opacity:0;transform:scale(0.2)} 65%{transform:scale(1.2)} 100%{opacity:1;transform:scale(1)} }
-@keyframes onbXpGrow     { to{width:62%} }
-
-/* Slide 1 — 로고 */
-.onboard-slide.onb-in .onb-hero-logo { animation:onbLogoBounce 0.65s cubic-bezier(.2,.7,.3,1) both; }
-
-/* Slide 2 — 힌트 */
-.onboard-slide.onb-in .onb-hint-card   { opacity:0; animation:onbFlyUp 0.45s cubic-bezier(.2,.7,.3,1) forwards; }
-.onboard-slide.onb-in .onb-hint-card:nth-child(1) { animation-delay:0.05s; }
-.onboard-slide.onb-in .onb-hint-card:nth-child(2) { animation-delay:0.32s; }
-.onboard-slide.onb-in .onb-hint-card:nth-child(3) { animation-delay:0.59s; }
-.onboard-slide.onb-in .onb-answer      { opacity:0; animation:onbFlyUp 0.45s 0.92s cubic-bezier(.2,.7,.3,1) forwards; }
-
-/* Slide 3 — 난이도 */
-.onboard-slide.onb-in .onb-diff-row                { opacity:0; animation:onbFlyUp 0.38s cubic-bezier(.2,.7,.3,1) forwards; }
-.onboard-slide.onb-in .onb-diff-row:nth-child(1)   { animation-delay:0.04s; }
-.onboard-slide.onb-in .onb-diff-row:nth-child(2)   { animation-delay:0.16s; }
-.onboard-slide.onb-in .onb-diff-row:nth-child(3)   { animation-delay:0.28s; }
-.onboard-slide.onb-in .onb-diff-row:nth-child(4)   { animation-delay:0.40s; }
-.onboard-slide.onb-in .onb-diff-row:nth-child(5)   { animation-delay:0.52s; }
-
-/* Slide 4 — 파티 */
-.onboard-slide.onb-in .onb-party-player:first-child { animation:onbFlyLeft  0.5s 0.05s cubic-bezier(.2,.7,.3,1) both; }
-.onboard-slide.onb-in .onb-party-vs                 { animation:onbPop      0.45s 0.22s cubic-bezier(.2,.7,.3,1) both; }
-.onboard-slide.onb-in .onb-party-player:last-child  { animation:onbFlyRight 0.5s 0.12s cubic-bezier(.2,.7,.3,1) both; }
-
-/* Slide 5 — 레벨/미션 */
-.onboard-slide.onb-in .onb-xp-card               { animation:onbFlyUp  0.4s 0.05s cubic-bezier(.2,.7,.3,1) both; }
-.onboard-slide.onb-in .onb-xp-fill               { animation:onbXpGrow 1.2s 0.42s cubic-bezier(.2,.7,.3,1) forwards; }
-.onboard-slide.onb-in .onb-mission-card           { opacity:0; animation:onbFlyUp 0.4s cubic-bezier(.2,.7,.3,1) forwards; }
-.onboard-slide.onb-in .onb-mission-card:nth-child(1) { animation-delay:0.32s; }
-.onboard-slide.onb-in .onb-mission-card:nth-child(2) { animation-delay:0.48s; }
-
-#screenOnboarding.screen.active { padding:32px 20px 24px; }
 
 /* 인증 탭 */
 .auth-tabs { display:flex; gap:6px; margin-bottom:18px; }
@@ -763,8 +666,6 @@ input,button,textarea,select { font-family:inherit; }
 .home-header { width:100%; max-width:400px; display:flex; flex-direction:column; align-items:center; gap:6px; margin-bottom:20px; }
 .home-header-sub { display:flex; align-items:center; justify-content:space-between; width:100%; }
 .home-header-right { display:flex; align-items:center; gap:8px; }
-@media (min-width:480px) { .home-header,.w400,.premium-card,.daily-section,.one-pct-game-header,.suggest-card,.rush-info-card,.streak-banner,.profile-card,.avatar-picker,.one-pct-card,.crowd-card,.section-title,.mission-list,.attendance-banner,.lang-cards,.lang-confirm-btn,.onboard-shell { max-width:480px; } }
-@media (min-width:600px) { .home-header,.w400,.premium-card,.daily-section,.one-pct-game-header,.suggest-card,.rush-info-card,.streak-banner,.profile-card,.avatar-picker,.one-pct-card,.crowd-card,.section-title,.mission-list,.attendance-banner,.lang-cards,.lang-confirm-btn,.onboard-shell { max-width:560px; } }
 .home-streak-badge { display:flex; align-items:center; gap:4px; background:var(--warn-bg); border:1px solid #F0DCB2; border-radius:20px; padding:5px 10px; font-size:0.75rem; font-weight:700; color:#D97706; }
 .home-user-info { display:flex; flex-direction:row; align-items:center; gap:5px; cursor:pointer; }
 .home-user-name { font-size:0.75rem; font-weight:700; color:var(--text); }
@@ -990,100 +891,6 @@ input,button,textarea,select { font-family:inherit; }
 </div>
 
 <!-- ═══════ 온보딩 (첫 방문자 전용) ═══════ -->
-<div class="screen" id="screenOnboarding">
-  <div class="onboard-shell">
-    <div class="onboard-top">
-      <button class="onboard-skip" onclick="finishOnboarding()">건너뛰기</button>
-    </div>
-    <div class="onboard-stage">
-      <div class="onboard-track" id="onboardTrack">
-        <!-- Slide 1: 인트로 -->
-        <div class="onboard-slide">
-          <div class="onboard-visual">
-            <div class="onb-hero-logo">n<span class="logo-eyes" aria-hidden="true"><span class="logo-eye logo-eye-l"></span><span class="logo-eye logo-eye-r"></span></span>nchi<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">oo</span></div>
-          </div>
-          <div class="onboard-title">힌트 읽고 단어 맞히기</div>
-          <div class="onboard-body">noonchi는 힌트를 보고 정답 단어를 맞히는<br>단어 연상 게임이에요.</div>
-        </div>
-        <!-- Slide 2: 힌트 예시 -->
-        <div class="onboard-slide">
-          <div class="onboard-visual">
-            <div class="onb-hints" id="onbHintsDemo">
-              <div class="onb-hint-card"><span class="onb-hint-num">1</span><span class="onb-hint-text">아침 일과</span></div>
-              <div class="onb-hint-card"><span class="onb-hint-num">2</span><span class="onb-hint-text">카페인</span></div>
-              <div class="onb-hint-card"><span class="onb-hint-num">3</span><span class="onb-hint-text">바리스타</span></div>
-              <div class="onb-answer">커피</div>
-            </div>
-          </div>
-          <div class="onboard-title">힌트를 보고 맞춰요</div>
-          <div class="onboard-body">하나씩 공개되는 힌트로<br>정답 단어를 추리해보세요.</div>
-        </div>
-        <!-- Slide 3: 난이도 -->
-        <div class="onboard-slide">
-          <div class="onboard-visual">
-            <div class="onb-diff-list">
-              <div class="onb-diff-row"><span class="onb-diff-emoji">🟢</span><span class="onb-diff-name">쉬움</span><span class="onb-diff-rate">정답률 93%</span></div>
-              <div class="onb-diff-row"><span class="onb-diff-emoji">🔵</span><span class="onb-diff-name">보통</span><span class="onb-diff-rate">정답률 69%</span></div>
-              <div class="onb-diff-row"><span class="onb-diff-emoji">🟡</span><span class="onb-diff-name">어려움</span><span class="onb-diff-rate">정답률 47%</span></div>
-              <div class="onb-diff-row"><span class="onb-diff-emoji">🟠</span><span class="onb-diff-name">극한</span><span class="onb-diff-rate">정답률 22%</span></div>
-              <div class="onb-diff-row"><span class="onb-diff-emoji">🔴</span><span class="onb-diff-name">지옥</span><span class="onb-diff-rate">정답률 9%</span></div>
-            </div>
-          </div>
-          <div class="onboard-title">5단계 난이도</div>
-          <div class="onboard-body">실력에 맞게 선택하세요.<br>레벨이 올라가면 더 어려운 모드도 열려요.</div>
-        </div>
-        <!-- Slide 4: 파티모드 -->
-        <div class="onboard-slide">
-          <div class="onboard-visual">
-            <div class="onb-party">
-              <div class="onb-party-player">
-                <div class="onb-party-avatar">🦊</div>
-                <div class="onb-party-name">나</div>
-              </div>
-              <div class="onb-party-vs">VS</div>
-              <div class="onb-party-player">
-                <div class="onb-party-avatar opp">🐼</div>
-                <div class="onb-party-name">친구</div>
-              </div>
-            </div>
-          </div>
-          <div class="onboard-title">친구와 실시간 대결</div>
-          <div class="onboard-body">파티 코드를 공유해서<br>친구와 누가 더 빠르게 맞히는지 겨뤄보세요.</div>
-        </div>
-        <!-- Slide 5: 레벨/미션 -->
-        <div class="onboard-slide">
-          <div class="onboard-visual">
-            <div class="onb-grow">
-              <div class="onb-xp-card">
-                <div class="onb-xp-row">
-                  <span class="onb-xp-lv">Lv.3 · 단어 새싹</span>
-                  <span class="onb-xp-pts">186 / 300 XP</span>
-                </div>
-                <div class="onb-xp-bar"><div class="onb-xp-fill"></div></div>
-              </div>
-              <div class="onb-mission-card done"><span class="onb-mission-icon">🟢</span><span class="onb-mission-text">쉬움 4개 클리어</span><span class="onb-mission-xp">+10 XP</span></div>
-              <div class="onb-mission-card"><span class="onb-mission-icon">🔥</span><span class="onb-mission-text">3연속 정답</span><span class="onb-mission-xp">+15 XP</span></div>
-            </div>
-          </div>
-          <div class="onboard-title">플레이할수록 성장</div>
-          <div class="onboard-body">매일 미션을 클리어하고<br>레벨업해서 새로운 모드를 해금하세요.</div>
-        </div>
-      </div>
-    </div>
-    <div class="onboard-dots" id="onboardDots">
-      <span class="onboard-dot active"></span>
-      <span class="onboard-dot"></span>
-      <span class="onboard-dot"></span>
-      <span class="onboard-dot"></span>
-      <span class="onboard-dot"></span>
-    </div>
-    <div class="onboard-actions">
-      <button class="onboard-prev" id="onboardPrevBtn" onclick="onboardPrev()" disabled>← 이전</button>
-      <button class="onboard-next" id="onboardNextBtn" onclick="onboardNext()">다음 →</button>
-    </div>
-  </div>
-</div>
-
 <!-- 1. 로그인 -->
 <div class="screen active" id="screenLogin">
   <div class="logo" id="loginLogo" onclick="_adminTap()" style="cursor:default">n<span class="logo-eyes" aria-hidden="true"><span class="logo-eye logo-eye-l"></span><span class="logo-eye logo-eye-r"></span></span>nchi<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">oo</span></div>
@@ -3166,7 +2973,6 @@ let selectedLangTemp='';
 var isPremium = false;        // 프리미엄 구독 여부
 var premiumUntil = null;      // 구독 만료일 (ISO string)
 var sbAuthToken = null;       // Supabase Auth JWT
-var battleHostPremium = false;// 파티 방장이 프리미엄인지
 var isMaster = false;         // 마스터 계정 여부
 
 // ── 마스터 계정 이메일 목록 (모든 제한 해제 + 광고 없음) ──
@@ -3837,7 +3643,7 @@ async function togglePushNotification() {
 
 function doLogout(){
   if(sbAuthToken) sbAuthSignOut(sbAuthToken).catch(function(){});
-  isGuest=false; currentUser=''; currentEmail=''; isPremium=false; premiumUntil=null; sbAuthToken=null; battleHostPremium=false; isMaster=false;
+  isGuest=false; currentUser=''; currentEmail=''; isPremium=false; premiumUntil=null; sbAuthToken=null; isMaster=false;
   _serverXpBaseline=null; _sessionXpEarned=0; // XP baseline 초기화
   showScreen('screenLogin');
 }
@@ -5352,41 +5158,8 @@ var battleMaxRounds=5;
 var battleRoundsPlayed=0, battleCompeteWins=0, battleCoopSolved=0;
 var isBattleGame=false, battleStartTime=0, battleIsCreator=false;
 var roundStartTime=0; // 각 라운드 시작 시각 (ms)
-var battleId=null, battleChannel=null, myPlayerId=null;
+var battleId=null, myPlayerId=null;
 var battlePlayers={}; // {username: {status, solved, hint_count}}
-
-// ── Supabase Realtime 연결 ──
-function sbRealtimeConnect(battleIdVal, onUpdate){
-  // 기존 채널 정리
-  if(battleChannel){
-    try{ battleChannel.unsubscribe(); }catch(e){}
-    battleChannel=null;
-  }
-  // Supabase Realtime은 WebSocket으로 직접 연결
-  const wsUrl = SB_URL.replace('https://','wss://') + '/realtime/v1/websocket?apikey='+SB_ANON+'&vsn=1.0.0';
-  const ws = new WebSocket(wsUrl);
-  battleChannel = ws;
-
-  ws.onopen = function(){
-    // 채널 구독
-    ws.send(JSON.stringify({
-      topic: 'realtime:public:battle_players:battle_id=eq.'+battleIdVal,
-      event: 'phx_join',
-      payload: {},
-      ref: '1'
-    }));
-  };
-  ws.onmessage = function(e){
-    try{
-      const msg = JSON.parse(e.data);
-      if(msg.event==='postgres_changes' || msg.event==='INSERT' || msg.event==='UPDATE'){
-        if(onUpdate) onUpdate(msg.payload);
-      }
-    }catch(ex){}
-  };
-  ws.onerror = function(e){ console.warn('Realtime 오류:', e); };
-  return ws;
-}
 
 // ── 대결방 생성 ──
 async function sbCreateBattle(code, diff, mode, wordIdx){
@@ -6190,7 +5963,8 @@ async function cancelPartyRequest(){
   _restoreVoteBtns();
   await sbUpdateBattle(battleId,{consent_type:null,consent_agreed_count:0,consent_rejected:false,consent_total:0,consent_cancelled:true});
   // 잠깐 후 cancelled 초기화
-  setTimeout(function(){ sbUpdateBattle(battleId,{consent_cancelled:false}); }, 2000);
+  var _cid = battleId;
+  setTimeout(function(){ if(_cid && battleId===_cid) sbUpdateBattle(_cid,{consent_cancelled:false}); }, 2000);
 }
 
 function _restoreVoteBtns(){
@@ -6368,37 +6142,8 @@ function executeConsentAction(type){
   }
 }
 
-function executePartyHint(){
-  if(battleIsCreator){
-    // 방장: 광고 시작 신호 DB 저장 → 참가자도 광고 표시
-    if(battleId) sbUpdateBattle(battleId,{ad_playing:'hint'});
-    adCallback = function(){
-      shownHintCount++;
-      var _allH2 = window.currentHintsAll || currentHints;
-      var hintText = _allH2[shownHintCount-1] || _allH2[_allH2.length-1] || '';
-      renderHintCard(shownHintCount, hintText);
-      document.getElementById('moreHintBtn').className='more-hint-btn show';
-      // 광고 끝나면 hint_count 저장
-      if(battleId) sbUpdateBattle(battleId,{current_hint_count:shownHintCount, ad_playing:null});
-    };
-    showAd('hint');
-  }
-}
-
-function executePartyAnswer(){
-  if(battleIsCreator){
-    if(battleId) sbUpdateBattle(battleId,{ad_playing:'answer'});
-    adCallback = function(){
-      _revealAnswer();
-      if(battleId) sbUpdateBattle(battleId,{answer_request:true, ad_playing:null});
-    };
-    showAd('answer');
-  } else {
-    _revealAnswer();
-  }
-}
-
 function _revealAnswer(){
+  if(gameOver) return;
   gameOver=true; scoreTotal++; scoreStreak=0; updateScoreUI();
   document.getElementById('answerWord').textContent=currentWord;
   document.getElementById('answerReveal').className='answer-reveal show';
@@ -7653,7 +7398,7 @@ async function createBattle(){
   window._battleOrigDiff = battleDiff; // random 여부 기억
   var pool=wordDB.easy; // 모든 난이도 동일 풀
   var wIdx=Math.floor(Math.random()*pool.length);
-  battleWordIdx=wIdx; battleIsCreator=true; battleHostPremium=isPremium;
+  battleWordIdx=wIdx; battleIsCreator=true;
   var modeIdx=battleBattleMode==='coop'?1:0;
   _updateBattleCode(diffIdx, modeIdx, wIdx);
   var diffLabel={easy:'쉬움',normal:'보통',hard:'어려움',extreme:'극한',insane:'지옥',random:'랜덤'};
@@ -7940,7 +7685,6 @@ async function joinBattleWithSB(){
     battleWordIdx=battle.word_idx;
     battleIsCreator=false;
     battleCode=code;
-    battleHostPremium = !!(battle.host_premium);
     battleMaxRounds = battle.max_rounds || 5; // 방장이 설정한 문제 수 동기화
     // 이미 입장한 유저면 기존 플레이어 찾기
     var existingPlayers=await sbGetPlayers(battleId);
@@ -8280,44 +8024,12 @@ document.addEventListener('DOMContentLoaded', function(){
   renderRanking('easy');
   renderDailyMissions();
   checkURLBattleCode();
-  maybeShowOnboarding();
   // ── 서비스 워커 등록 (PWA 오프라인 지원) ──
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(function(){ /* SW 등록 실패 무시 */ });
   }
 });
 
-// ═══════════════════════════════
-// 온보딩 (첫 방문자 전용)
-// ═══════════════════════════════
-var onboardIdx = 0;
-function onboardPlaySlide(idx){
-  var slides = document.querySelectorAll('.onboard-slide');
-  var target = slides[idx];
-  if(!target) return;
-  slides.forEach(function(s){ s.classList.remove('onb-in'); });
-  void target.offsetWidth;
-  target.classList.add('onb-in');
-}
-function onboardGoTo(i){
-  onboardIdx = Math.max(0, Math.min(4, i));
-  document.getElementById('onboardTrack').style.transform = 'translateX(-' + (onboardIdx * 20) + '%)';
-  var dots = document.querySelectorAll('#onboardDots .onboard-dot');
-  dots.forEach(function(d, di){ d.classList.toggle('active', di === onboardIdx); });
-  document.getElementById('onboardPrevBtn').disabled = (onboardIdx === 0);
-  var nextBtn = document.getElementById('onboardNextBtn');
-  nextBtn.textContent = (onboardIdx === 4) ? '시작하기 ✨' : '다음 →';
-  onboardPlaySlide(onboardIdx);
-}
-function onboardNext(){ if(onboardIdx === 4){ finishOnboarding(); return; } onboardGoTo(onboardIdx + 1); }
-function onboardPrev(){ onboardGoTo(onboardIdx - 1); }
-function finishOnboarding(){
-  try { localStorage.setItem('noonchi_onboarded', '1'); } catch(e){}
-  showScreen('screenLogin');
-}
-function maybeShowOnboarding(){
-  try { localStorage.setItem('noonchi_onboarded', '1'); } catch(e){}
-}
 
 // ══════════════════════════════════════════
 // 군중모드 (오늘의 눈치)
