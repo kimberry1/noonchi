@@ -5607,6 +5607,9 @@ function startBattlePolling(battleIdVal){
               isBattleGame = true;
               document.getElementById('battleResultOverlay').className = 'confirm-overlay';
               startRound();
+              // currentHints는 startRound()에서 이미 계산됨 → DB 이벤트 기다리지 않고 즉시 표시
+              var _bcInitCount = DEFAULT_HINTS[battleDiff] || 6;
+              _syncHints(_bcInitCount);
             }
           }
         }
