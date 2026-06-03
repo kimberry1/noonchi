@@ -6344,9 +6344,12 @@ function executeConsentAction(type){
       window._battleUsedIdx.add(newWordIdx);
       battleWordIdx=newWordIdx;
       round++;
+      // broadcast 먼저 전송 (DB 업데이트 기다리지 않음 → 게스트 즉시 반응)
+      sendBattleBroadcast('bc_next', {word_idx: newWordIdx, diff: effDiff, round: round});
+      startRound(); // 방장 실행
       sbUpdateBattle(battleId,{
         word_idx: newWordIdx,
-        diff: effDiff,          // 해소된 난이도 참가자에게 전달
+        diff: effDiff,
         current_round: round,
         next_request: true,
         current_hint_count: 0,
@@ -6356,9 +6359,6 @@ function executeConsentAction(type){
         consent_agreed_count: 0,
         consent_rejected: false,
         consent_total: 0
-      }).then(function(){
-        startRound(); // 방장 실행
-        sendBattleBroadcast('bc_next', {word_idx: newWordIdx, diff: effDiff, round: round});
       });
     }
     // 게스트: bc_next broadcast(빠름) 또는 next_request DB 이벤트(폴백)에서 실행
