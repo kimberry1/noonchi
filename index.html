@@ -5193,9 +5193,17 @@ function noonchiPunch(level, opts){
     setTimeout(function(){ b.remove(); }, 2000);
   }
 }
+var _sharedAudioCtx = null;
+function _getAudioCtx(){
+  if(!_sharedAudioCtx || _sharedAudioCtx.state === 'closed'){
+    _sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(_sharedAudioCtx.state === 'suspended') _sharedAudioCtx.resume();
+  return _sharedAudioCtx;
+}
 function playSound(type){
   try {
-    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var ctx = _getAudioCtx();
     if(type === 'pop'){
       var o=ctx.createOscillator(), g=ctx.createGain();
       o.connect(g); g.connect(ctx.destination);
