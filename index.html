@@ -5558,6 +5558,31 @@ function startBattlePolling(battleIdVal){
         if(bp && bp.event === 'compete_solved' && bp.payload){
           onBroadcastSolved(bp.payload);
         }
+        // 힌트 공개 broadcast
+        if(bp && bp.event === 'bc_hint' && bp.payload && !battleIsCreator && isBattleGame){
+          if(!window._partyHintRunning) _syncHints(bp.payload.hint_count);
+        }
+        // 정답 공개 broadcast
+        if(bp && bp.event === 'bc_answer' && bp.payload && !battleIsCreator && isBattleGame){
+          if(!gameOver && !window._partyAnswerRunning){
+            window._partyAnswerRunning = true;
+            adCallback = function(){ _revealAnswer(); window._partyAnswerRunning = false; };
+            showAd('answer');
+          }
+        }
+        // 다음 문제 broadcast
+        if(bp && bp.event === 'bc_next' && bp.payload && !battleIsCreator){
+          var _bnd = bp.payload;
+          if(_bnd.word_idx !== undefined && _bnd.word_idx >= 0) battleWordIdx = _bnd.word_idx;
+          if(_bnd.diff) battleDiff = _bnd.diff;
+          if(_bnd.round > (window._lastProcessedRound || 0)){
+            round = _bnd.round;
+            gameOver = false;
+            isBattleGame = true;
+            document.getElementById('battleResultOverlay').className = 'confirm-overlay';
+            startRound();
+          }
+        }
         return;
       }
       if(msg.event === 'postgres_changes'){
@@ -6257,6 +6282,7 @@ function executeConsentAction(type){
         renderHintCard(shownHintCount, hintText);
         document.getElementById('moreHintBtn').className='more-hint-btn show';
         sbUpdateBattle(battleId,{current_hint_count:shownHintCount});
+        sendBattleBroadcast('bc_hint', {hint_count: shownHintCount});
       }
     };
     showAd('hint');
@@ -6265,7 +6291,10 @@ function executeConsentAction(type){
     _restoreVoteBtns();
     adCallback = function(){
       _revealAnswer();
-      if(battleIsCreator) sbUpdateBattle(battleId,{answer_request:true});
+      if(battleIsCreator){
+        sbUpdateBattle(battleId,{answer_request:true});
+        sendBattleBroadcast('bc_answer', {});
+      }
     };
     showAd('answer');
   } else if(type==='next'){
@@ -6297,9 +6326,10 @@ function executeConsentAction(type){
         consent_total: 0
       }).then(function(){
         startRound(); // 방장 실행
+        sendBattleBroadcast('bc_next', {word_idx: newWordIdx, diff: effDiff, round: round});
       });
     }
-    // 게스트: next_request WebSocket 감지에서만 실행 (여기서 실행 안 함)
+    // 게스트: bc_next broadcast(빠름) 또는 next_request DB 이벤트(폴백)에서 실행
   }
 }
 
