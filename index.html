@@ -1986,6 +1986,7 @@ var _wVerCheckTs = 0;  // 마지막 버전 확인 타임스탬프 (1분 쿨다�
 // 앱이 포그라운드로 돌아올 때 word_version 재확인 → 업데이트 감지 시 메모리 캐시 무효화
 document.addEventListener('visibilitychange', function(){
   if(document.hidden) return;
+  _autoRePush();
   var now = Date.now();
   if(now - _wVerCheckTs < 60000) return; // 1분 이내 중복 확인 방지
   _wVerCheckTs = now;
@@ -3404,7 +3405,7 @@ function doLogin(provider, providerId){
       var _prevId = localStorage.getItem('wl_user_id');
       if(_prevId && _prevId !== String(user.id)){
         var _td = new Date(); var _ds = _td.getFullYear()+'_'+(_td.getMonth()+1)+'_'+_td.getDate();
-        ['wl_stats','wl_xp','wl_daily','wl_wrongnote','wl_used_idx','wl_rush_pb','wl_avatar','wl_dc_state',
+        ['wl_stats','wl_xp','wl_daily','wl_wrongnote','wl_used_idx','wl_rush_pb','wl_avatar','wl_dc_state','wl_push_enabled',
          'rush_'+_ds,'rush_ad_'+_ds,'spy_'+_ds,'spy_ad_'+_ds].forEach(function(k){ localStorage.removeItem(k); });
       }
       try{ localStorage.setItem('wl_user_id', String(user.id)); }catch(e){}
@@ -3585,7 +3586,8 @@ async function updatePushToggleUI() {
   try {
     var reg = await navigator.serviceWorker.ready;
     var sub = await reg.pushManager.getSubscription();
-    btn.textContent = sub ? '켜짐 ✅' : '꺼짐';
+    var enabled = sub || (localStorage.getItem('wl_push_enabled') === '1' && Notification.permission === 'granted');
+    btn.textContent = enabled ? '켜짐 ✅' : '꺼짐';
   } catch(e) {
     btn.textContent = '꺼짐';
   }
@@ -3605,6 +3607,7 @@ async function togglePushNotification() {
     var sub = await reg.pushManager.getSubscription();
     if (sub) {
       await sub.unsubscribe();
+      localStorage.removeItem('wl_push_enabled');
       if (currentEmail) {
         fetch(SB_URL + '/rest/v1/push_subscriptions?user_email=eq.' + encodeURIComponent(currentEmail), {
           method: 'DELETE',
@@ -3632,6 +3635,7 @@ async function togglePushNotification() {
           body: JSON.stringify({ user_email: pushEmail, subscription: JSON.stringify(sub) })
         }).catch(function(){});
       }
+      localStorage.setItem('wl_push_enabled', '1');
       showShareToast('알림이 켜졌어요!');
     }
     updatePushToggleUI();
@@ -3639,6 +3643,26 @@ async function togglePushNotification() {
     console.warn('[Push]', e);
     showShareToast('⚠️ 알림 설정에 실패했어요');
   }
+}
+
+async function _autoRePush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  if (localStorage.getItem('wl_push_enabled') !== '1') return;
+  try {
+    var reg = await navigator.serviceWorker.ready;
+    var sub = await reg.pushManager.getSubscription();
+    if (sub) return;
+    sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: _urlB64ToUint8(VAPID_PUBLIC_KEY) });
+    var pushEmail = currentEmail || currentUser;
+    if (pushEmail) {
+      fetch(SB_URL + '/rest/v1/push_subscriptions', {
+        method: 'POST',
+        headers: { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+        body: JSON.stringify({ user_email: pushEmail, subscription: JSON.stringify(sub) })
+      }).catch(function(){});
+    }
+  } catch(e) {}
 }
 
 function doLogout(){
