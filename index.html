@@ -4399,7 +4399,7 @@ async function showAd(type){
   if(!overlay){ if(adCallback){ adCallback(); adCallback=null; } return; }
   var skipBtn   = document.getElementById(skipId);
   var countEl   = document.getElementById(countId);
-  if(skipBtn){ skipBtn.disabled=true; skipBtn.style.opacity='0.4'; }
+  if(skipBtn){ skipBtn.disabled=true; skipBtn.style.opacity='0.4'; skipBtn.classList.remove('show'); }
   if(countEl) countEl.textContent=sec;
   overlay.className='ad-overlay show';
   clearInterval(adTimer);
@@ -4408,7 +4408,7 @@ async function showAd(type){
     if(countEl) countEl.textContent=Math.max(0,sec);
     if(sec<=0){
       clearInterval(adTimer);
-      if(skipBtn){ skipBtn.disabled=false; skipBtn.style.opacity='1'; }
+      if(skipBtn){ skipBtn.disabled=false; skipBtn.style.opacity='1'; skipBtn.classList.add('show'); }
     }
   },1000);
 }
@@ -6375,7 +6375,7 @@ function enterRushMode(){
   var btn = document.getElementById('rushStartBtn');
   var msg = document.getElementById('rushNoAttemptsMsg');
   var adBtn = document.getElementById('rushAdBonusBtn');
-  var canAdBonus = !isGuest && !isMaster;
+  var canAdBonus = isApp && !isGuest && !isMaster;
   if(remaining <= 0){
     if(btn) btn.style.display='none';
     if(msg) msg.style.display='block';
@@ -6736,7 +6736,7 @@ function renderRushResultActions(){
   var used = getRushAttemptsToday();
   var total = getRushTotalAvailable();
   var remaining = total - used;
-  var canAdBonus = !isGuest && !isMaster;
+  var canAdBonus = isApp && !isGuest && !isMaster;
   var S = 'font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;padding:13px;border-radius:12px;width:100%';
   var html = '';
   if(remaining > 0){
@@ -6832,7 +6832,7 @@ function _updateSpyLobbyUI(){
   var btn = document.getElementById('spyStartBtn');
   var msg = document.getElementById('spyNoAttemptsMsg');
   var adBtn = document.getElementById('spyAdBonusBtn');
-  var canAdBonus = !isGuest && !isMaster;
+  var canAdBonus = isApp && !isGuest && !isMaster;
   if(remaining <= 0){
     if(btn) btn.style.display = 'none';
     if(msg) msg.style.display = 'block';
@@ -7000,7 +7000,7 @@ function renderSpyResultActions(){
   var used = getSpyAttemptsToday();
   var total = getSpyTotalAvailable();
   var remaining = total - used;
-  var canAdBonus = !isGuest && !isMaster;
+  var canAdBonus = isApp && !isGuest && !isMaster;
   var hasShareData = !!window._spyShareData;
   var S = 'font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;padding:13px;border-radius:12px;width:100%';
   var html = '';
