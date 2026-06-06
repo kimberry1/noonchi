@@ -2438,7 +2438,7 @@ function showPremiumManage(){
 async function sbGetOrCreateUser(username, email, provider, providerId){
   // 1. provider_user_id로 조회 (소셜 로그인)
   if(provider && providerId){
-    const byProvider = await sbFetch('users?provider=eq.'+encodeURIComponent(provider)+'&provider_user_id=eq.'+encodeURIComponent(providerId)+'&select=id,username,email,is_premium,premium_until,is_master,xp,avatar,last_login_date,login_streak&limit=1');
+    const byProvider = await sbFetch('users?provider=eq.'+encodeURIComponent(provider)+'&provider_user_id=eq.'+encodeURIComponent(providerId)+'&select=id,username,email,is_premium,premium_until,is_master,xp,avatar,last_login_date,login_streak,rush_date,rush_used,spy_date,spy_used&limit=1');
     if(byProvider && byProvider.length > 0) return byProvider[0];
     const created = await sbFetch('users', { method:'POST', body:{ username, provider, provider_user_id: providerId, is_premium: false } });
     return created && created[0] ? created[0] : null;
@@ -3423,6 +3423,14 @@ function doLogin(provider, providerId){
         saveStats(stats);
       }
       sbFetch('users?id=eq.'+user.id, { method:'PATCH', body:{ last_seen: new Date().toISOString() } }).catch(function(){});
+      // rush/spy 횟수 서버 동기화 (다기기/재로그인 시 유지)
+      var _today = new Date().toISOString().slice(0,10);
+      if(user.rush_date === _today && user.rush_used > 0){
+        var _rk=getRushAttemptsKey(); localStorage.setItem(_rk, String(Math.max(getRushAttemptsToday(), user.rush_used)));
+      }
+      if(user.spy_date === _today && user.spy_used > 0){
+        var _sk=getSpyAttemptsKey(); localStorage.setItem(_sk, String(Math.max(getSpyAttemptsToday(), user.spy_used)));
+      }
       sbLoadAndMergeXPByUsername(currentUser);
     }
   }).catch(function(e){ console.warn('SB 유저 등록 실패:', e); });
@@ -6338,7 +6346,12 @@ function getRushAttemptsKey(){
 function getRushAttemptsToday(){ return parseInt(localStorage.getItem(getRushAttemptsKey())||'0'); }
 function addRushAttempt(){
   var k=getRushAttemptsKey();
-  localStorage.setItem(k, getRushAttemptsToday()+1);
+  var n=getRushAttemptsToday()+1;
+  localStorage.setItem(k, n);
+  if(window._sbUserId){
+    var today=new Date().toISOString().slice(0,10);
+    sbFetch('users?id=eq.'+window._sbUserId,{method:'PATCH',body:{rush_date:today,rush_used:n}}).catch(function(){});
+  }
 }
 
 function enterRushMode(){
@@ -6362,7 +6375,7 @@ function enterRushMode(){
   var btn = document.getElementById('rushStartBtn');
   var msg = document.getElementById('rushNoAttemptsMsg');
   var adBtn = document.getElementById('rushAdBonusBtn');
-  var canAdBonus = isApp && !isGuest;
+  var canAdBonus = !isGuest && !isMaster;
   if(remaining <= 0){
     if(btn) btn.style.display='none';
     if(msg) msg.style.display='block';
@@ -6723,7 +6736,7 @@ function renderRushResultActions(){
   var used = getRushAttemptsToday();
   var total = getRushTotalAvailable();
   var remaining = total - used;
-  var canAdBonus = isApp && !isGuest;
+  var canAdBonus = !isGuest && !isMaster;
   var S = 'font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;padding:13px;border-radius:12px;width:100%';
   var html = '';
   if(remaining > 0){
@@ -6764,7 +6777,15 @@ function addSpyAdBonus(){ var k=getSpyAdBonusKey(); localStorage.setItem(k, getS
 function getSpyTotalAvailable(){ return isMaster ? 9999 : isGuest ? 0 : SPY_MAX_FREE + getSpyAdBonusToday(); }
 function getSpyAttemptsKey(){ var d=new Date(); return 'spy_'+d.getFullYear()+'_'+(d.getMonth()+1)+'_'+d.getDate(); }
 function getSpyAttemptsToday(){ return parseInt(localStorage.getItem(getSpyAttemptsKey())||'0'); }
-function addSpyAttempt(){ var k=getSpyAttemptsKey(); localStorage.setItem(k, getSpyAttemptsToday()+1); }
+function addSpyAttempt(){
+  var k=getSpyAttemptsKey();
+  var n=getSpyAttemptsToday()+1;
+  localStorage.setItem(k, n);
+  if(window._sbUserId){
+    var today=new Date().toISOString().slice(0,10);
+    sbFetch('users?id=eq.'+window._sbUserId,{method:'PATCH',body:{spy_date:today,spy_used:n}}).catch(function(){});
+  }
+}
 
 function _spyShuffle(arr){
   var a = arr.slice();
@@ -6811,7 +6832,7 @@ function _updateSpyLobbyUI(){
   var btn = document.getElementById('spyStartBtn');
   var msg = document.getElementById('spyNoAttemptsMsg');
   var adBtn = document.getElementById('spyAdBonusBtn');
-  var canAdBonus = isApp && !isGuest;
+  var canAdBonus = !isGuest && !isMaster;
   if(remaining <= 0){
     if(btn) btn.style.display = 'none';
     if(msg) msg.style.display = 'block';
@@ -6979,7 +7000,7 @@ function renderSpyResultActions(){
   var used = getSpyAttemptsToday();
   var total = getSpyTotalAvailable();
   var remaining = total - used;
-  var canAdBonus = isApp && !isGuest;
+  var canAdBonus = !isGuest && !isMaster;
   var hasShareData = !!window._spyShareData;
   var S = 'font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;padding:13px;border-radius:12px;width:100%';
   var html = '';
