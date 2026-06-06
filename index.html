@@ -3672,23 +3672,39 @@ function doLogout(){
   showScreen('screenLogin');
 }
 var KAKAO_REDIRECT = 'https://kimberry1.github.io/noonchi/';
+var KAKAO_APP_REDIRECT = 'kakao202fdef735b96312e7d6a2eeb1352dd7://oauth';
 function loginKakao(){
   if(isApp){
-    // Capacitor WebView에서 SDK가 intent:// 스킴 시도 → 실패. 직접 OAuth URL로 이동
-    window.location.href = 'https://kauth.kakao.com/oauth/authorize'
+    var url = 'https://kauth.kakao.com/oauth/authorize'
       + '?client_id=' + KAKAO_REST_KEY
-      + '&redirect_uri=' + encodeURIComponent(KAKAO_REDIRECT)
+      + '&redirect_uri=' + encodeURIComponent(KAKAO_APP_REDIRECT)
       + '&response_type=code';
+    var Browser = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser;
+    if(Browser){ Browser.open({ url: url }); }
+    else { window.location.href = url; }
     return;
   }
   if(typeof Kakao === 'undefined' || !Kakao.isInitialized()){
     showShareToast('⚠️ 카카오 앱키가 설정되지 않았어요');
     return;
   }
-  // SDK v2: authorize() → 리다이렉트 후 ?code= 파라미터로 돌아옴
   Kakao.Auth.authorize({ redirectUri: KAKAO_REDIRECT });
 }
-// 카카오 로그인 콜백 처리 (리다이렉트 후 ?code= 감지)
+// 앱: deep link로 돌아온 code 처리
+function _handleKakaoAppCode(code){
+  fetch(KAKAO_TOKEN_FN, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json', 'Authorization':'Bearer '+SB_ANON},
+    body: JSON.stringify({ code: code, redirect_uri: KAKAO_APP_REDIRECT })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if(!data.kakao_id){ showShareToast('카카오 로그인 실패'); return; }
+    doLogin('카카오', data.kakao_id);
+  })
+  .catch(function(){ showShareToast('카카오 로그인 실패'); });
+}
+// 웹: 리다이렉트 후 ?code= 감지
 function _handleKakaoCallback(){
   var params = new URLSearchParams(window.location.search);
   var code = params.get('code');
@@ -3697,7 +3713,6 @@ function _handleKakaoCallback(){
   if(error){ showShareToast('카카오 로그인 취소됨'); history.replaceState(null,'',window.location.pathname); return; }
   if(!code || state === 'google_login') return;
   history.replaceState(null,'',window.location.pathname);
-  // 인가 코드 → Edge Function에서 토큰 교환 (CLIENT_SECRET 서버에서만 사용)
   fetch(KAKAO_TOKEN_FN, {
     method: 'POST',
     headers: {'Content-Type':'application/json', 'Authorization':'Bearer '+SB_ANON},
@@ -8057,6 +8072,20 @@ document.addEventListener('DOMContentLoaded', function(){
   initReferral();
   _handleGoogleCallback();
   _handleKakaoCallback();
+  // 앱: Chrome Custom Tab → deep link로 돌아온 카카오 code 처리
+  var _App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  var _Browser = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser;
+  if(_App){
+    _App.addListener('appUrlOpen', function(data){
+      try{
+        var m = (data.url || '').match(/[?&]code=([^&]+)/);
+        if(m){
+          if(_Browser) _Browser.close();
+          _handleKakaoAppCode(decodeURIComponent(m[1]));
+        }
+      }catch(e){}
+    });
+  }
   renderRanking('easy');
   renderDailyMissions();
   checkURLBattleCode();
