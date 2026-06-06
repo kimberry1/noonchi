@@ -4374,9 +4374,10 @@ async function showAd(type){
   // Capacitor 환경: 실제 AdMob 보상형 광고
   if(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()){
     try {
-      var { AdMob, RewardAdPluginEvents } = await import('@capacitor-community/admob');
+      var AdMob = window.Capacitor.Plugins.AdMob;
+      if(!AdMob) throw new Error('AdMob plugin not available');
       await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
-      AdMob.addListener(RewardAdPluginEvents.Rewarded, function(){
+      AdMob.addListener('onRewarded', function(){
         if(adCallback){ adCallback(); adCallback=null; }
       });
       await AdMob.showRewardVideoAd();
@@ -8799,8 +8800,8 @@ async function shareCrowdResult() {
 (async function initAdMob(){
   if(!window.Capacitor || !window.Capacitor.isNativePlatform || !window.Capacitor.isNativePlatform()) return;
   try {
-    var { AdMob } = await import('@capacitor-community/admob');
-    await AdMob.initialize({ testingDevices: [], initializeForTesting: true });
+    var AdMob = window.Capacitor.Plugins.AdMob;
+    if(AdMob) await AdMob.initialize({ testingDevices: [], initializeForTesting: true });
   } catch(e){ console.warn('AdMob init failed', e); }
 })();
 </script>
