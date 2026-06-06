@@ -877,7 +877,7 @@ input,button,textarea,select { font-family:inherit; }
   }
 
   // ── AdMob 보상형 광고 ID ──
-  var ADMOB_REWARDED_ID = 'ca-app-pub-3940256099942544/5224354917'; // 테스트 ID (연결 확인용)
+  var ADMOB_REWARDED_ID = 'ca-app-pub-8938493055899242/4689268202';
 </script>
 </head>
 <body>
@@ -8801,7 +8801,7 @@ async function shareCrowdResult() {
   if(!window.Capacitor || !window.Capacitor.isNativePlatform || !window.Capacitor.isNativePlatform()) return;
   try {
     var AdMob = window.Capacitor.Plugins.AdMob;
-    if(AdMob) await AdMob.initialize({ testingDevices: [], initializeForTesting: true });
+    if(AdMob) await AdMob.initialize({ testingDevices: [] });
   } catch(e){ console.warn('AdMob init failed', e); }
 })();
 </script>
