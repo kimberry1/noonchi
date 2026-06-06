@@ -3673,6 +3673,14 @@ function doLogout(){
 }
 var KAKAO_REDIRECT = 'https://kimberry1.github.io/noonchi/';
 function loginKakao(){
+  if(isApp){
+    // Capacitor WebView에서 SDK가 intent:// 스킴 시도 → 실패. 직접 OAuth URL로 이동
+    window.location.href = 'https://kauth.kakao.com/oauth/authorize'
+      + '?client_id=' + KAKAO_REST_KEY
+      + '&redirect_uri=' + encodeURIComponent(KAKAO_REDIRECT)
+      + '&response_type=code';
+    return;
+  }
   if(typeof Kakao === 'undefined' || !Kakao.isInitialized()){
     showShareToast('⚠️ 카카오 앱키가 설정되지 않았어요');
     return;
