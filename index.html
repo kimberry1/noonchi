@@ -4384,10 +4384,10 @@ async function showAd(type){
     try {
       var AdMob = window.Capacitor.Plugins.AdMob;
       if(!AdMob) throw new Error('AdMob plugin not available');
-      await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
-      AdMob.addListener('onRewarded', function(){
+      AdMob.addListener('onRewardedVideoAdReward', function(){
         if(adCallback){ adCallback(); adCallback=null; }
       });
+      await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
       await AdMob.showRewardVideoAd();
     } catch(e){
       console.warn('AdMob 광고 로드 실패:', e);
